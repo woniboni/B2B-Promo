@@ -7,6 +7,7 @@
 | v1.1 | 2026-08-13 | docs 정합성 교차 검토 결과 반영: 헤더 기반 문서 목록에 누락된 `4-user-scenario.md`(v1.1) 추가, BE-4/FE-6 관련 문서에 BR-10 보완, BE-5 관련 문서에 BR-11 보완, 0.3절 의존 관계 다이어그램에 누락된 BE-8→FE-8 엣지 추가 |
 | v1.2 | 2026-08-13 | DB-1 수행 완료: `b2b_promo` 생성, `backend/migrations/001_init.sql` 실행 및 7개 완료 조건 실측 검증(테이블 6개, BR-3/BR-5 UNIQUE, BR-6 CHECK, BR-8 GENERATED 컬럼 계산) 후 체크박스 반영 |
 | v1.3 | 2026-08-13 | DB-2 수행 완료: `backend/scripts/seedAdmin.js` 작성(ON CONFLICT DO NOTHING 방식), 4개 완료 조건 실측 검증(role=admin, bcrypt 해시, 재실행 시 중복 없음, partners 행 미생성) 후 체크박스 반영. 시딩 스크립트 실행에 필요한 최소 패키지(pg/bcrypt/dotenv)만 설치했으며 Express 등 전체 스캐폴딩(BE-1)은 별도 수행 필요, `.env`의 접속 DB를 `b2b_promo`로 갱신 |
+| v1.4 | 2026-08-13 | BE-1 수행 완료: `express`/`jsonwebtoken`/`cors` 추가 설치, `src/app.js`(Express 앱, 헬스체크 `GET /`·에러 유발용 임시 라우트 `GET /__throw`, CORS는 `FRONTEND_ORIGIN` 단일 origin만 허용) / `src/server.js`(리스닝 전담) / `src/db/pool.js`(raw `pg.Pool`) / `src/middlewares/errorHandler.js` 작성. `.env`에 `PORT`, `FRONTEND_ORIGIN` 추가(`.gitignore`로 이미 커밋 제외 확인). 이번 세션에서 프로젝트 원칙(5-project-principle.md 4절, 테스트 프레임워크 미도입)을 사용자가 명시적으로 override하여 Jest+supertest 테스트 스위트(`backend/tests/*.test.js`)를 도입, `src/**/*.js` 기준 문(statement)/라인/함수/분기 커버리지 100% 달성(11개 테스트 통과) 후 6개 완료 조건을 실측 검증(서버 기동·200 응답·SELECT 1 연결·`.env` 미커밋·errorHandler JSON 에러 응답·ORM 미사용)하고 체크박스 반영 |
 
 > 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1), `docs/5-project-principle.md`(v1.1), `docs/6-arch-diagram.md`(v1.1), `docs/7-wireframe.md`(v1.2), `docs/8-erd.md`(v1.1), `docs/8-schema.sql`(v1.1)을 기반으로 작성되었다. UC/BR/EX 번호는 도메인 정의서와 동일하게 참조하며, 파일 경로는 `5-project-principle.md` 6~7절 디렉토리 구조를 그대로 따른다.
 
@@ -138,12 +139,12 @@ flowchart LR
 - CORS는 프론트엔드 개발 서버 origin만 허용 (`5-project-principle.md` 5절)
 
 **완료 조건**
-- [ ] `npm start`로 Express 서버가 지정 포트에서 기동된다
-- [ ] 헬스 확인용 임시 라우트(`GET /`) 호출 시 200 응답이 온다
-- [ ] `src/db/pool.js`를 통해 PostgreSQL 연결이 성공한다(간단한 `SELECT 1` 확인)
-- [ ] `.env`가 `.gitignore`에 포함되어 있고 저장소에 커밋되지 않는다
-- [ ] 의도적으로 에러를 던지는 라우트가 `errorHandler`를 거쳐 JSON 에러 응답을 반환한다
-- [ ] ORM/쿼리빌더를 도입하지 않고 `pg` 파라미터 바인딩만 사용한다 (`5-project-principle.md` 1절)
+- [x] `npm start`로 Express 서버가 지정 포트에서 기동된다
+- [x] 헬스 확인용 임시 라우트(`GET /`) 호출 시 200 응답이 온다
+- [x] `src/db/pool.js`를 통해 PostgreSQL 연결이 성공한다(간단한 `SELECT 1` 확인)
+- [x] `.env`가 `.gitignore`에 포함되어 있고 저장소에 커밋되지 않는다
+- [x] 의도적으로 에러를 던지는 라우트가 `errorHandler`를 거쳐 JSON 에러 응답을 반환한다
+- [x] ORM/쿼리빌더를 도입하지 않고 `pg` 파라미터 바인딩만 사용한다 (`5-project-principle.md` 1절)
 
 ---
 
