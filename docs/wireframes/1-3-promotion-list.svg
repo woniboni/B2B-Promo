@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 620" font-family="Arial, Helvetica, sans-serif">
+  <rect x="0" y="0" width="980" height="620" fill="#ffffff"/>
+
+  <!-- ============ MOBILE FRAME ============ -->
+  <text x="30" y="24" font-size="14" font-weight="bold" fill="#333">모바일 (기준 뷰포트)</text>
+  <rect x="30" y="36" width="300" height="560" rx="14" fill="#fafafa" stroke="#333" stroke-width="2"/>
+
+  <!-- header -->
+  <rect x="30" y="36" width="300" height="46" rx="14" fill="#eeeeee" stroke="#333" stroke-width="2"/>
+  <rect x="30" y="68" width="300" height="14" fill="#eeeeee"/>
+  <line x1="30" y1="82" x2="330" y2="82" stroke="#333" stroke-width="2"/>
+  <text x="44" y="65" font-size="15" font-weight="bold" fill="#222">B2B-Promo</text>
+  <text x="200" y="65" font-size="10" fill="#555">내 신청 · MY · 로그아웃</text>
+
+  <!-- section title -->
+  <text x="44" y="108" font-size="13" font-weight="bold" fill="#222">진행 중인 프로모션</text>
+  <line x1="30" y1="120" x2="330" y2="120" stroke="#ccc" stroke-width="1"/>
+
+  <!-- card 1 -->
+  <rect x="44" y="134" width="272" height="96" rx="6" fill="#ffffff" stroke="#999" stroke-width="1.5"/>
+  <rect x="56" y="146" width="52" height="18" rx="9" fill="none" stroke="#666" stroke-width="1"/>
+  <text x="82" y="159" font-size="9" fill="#555" text-anchor="middle">가격할인</text>
+  <text x="56" y="192" font-size="13" fill="#222">여름 성수기 특가</text>
+  <text x="56" y="212" font-size="10" fill="#888">(탭하면 상세로 이동)</text>
+
+  <!-- card 2 (coupon event) -->
+  <rect x="44" y="242" width="272" height="104" rx="6" fill="#ffffff" stroke="#999" stroke-width="1.5"/>
+  <rect x="56" y="254" width="34" height="18" rx="9" fill="none" stroke="#666" stroke-width="1"/>
+  <text x="73" y="267" font-size="9" fill="#555" text-anchor="middle">1+1</text>
+  <rect x="94" y="254" width="66" height="18" rx="9" fill="none" stroke="#b8860b" stroke-width="1"/>
+  <text x="127" y="267" font-size="9" fill="#8a6600" text-anchor="middle">쿠폰이벤트</text>
+  <text x="56" y="300" font-size="13" fill="#222">신제품 런칭 1+1</text>
+  <text x="56" y="320" font-size="10.5" fill="#333">잔여 27 / 50명</text>
+  <rect x="56" y="326" width="248" height="8" rx="4" fill="#eee" stroke="#999" stroke-width="1"/>
+  <rect x="56" y="326" width="134" height="8" rx="4" fill="#999"/>
+
+  <!-- card 3 -->
+  <rect x="44" y="358" width="272" height="80" rx="6" fill="#ffffff" stroke="#999" stroke-width="1.5"/>
+  <rect x="56" y="370" width="60" height="18" rx="9" fill="none" stroke="#666" stroke-width="1"/>
+  <text x="86" y="383" font-size="9" fill="#555" text-anchor="middle">샘플증정</text>
+  <text x="56" y="416" font-size="13" fill="#222">신메뉴 샘플 신청</text>
+
+  <text x="140" y="474" font-size="10" fill="#aaa">(하단 스크롤)</text>
+
+  <!-- caption -->
+  <text x="44" y="580" font-size="10" fill="#777">카드 세로 1열</text>
+
+  <!-- ============ DESKTOP FRAME ============ -->
+  <text x="380" y="24" font-size="14" font-weight="bold" fill="#333">데스크탑 (반응형 확장)</text>
+  <rect x="380" y="36" width="570" height="330" fill="#fafafa" stroke="#333" stroke-width="2"/>
+
+  <!-- header -->
+  <rect x="380" y="36" width="570" height="46" fill="#eeeeee" stroke="#333" stroke-width="2"/>
+  <text x="396" y="65" font-size="15" font-weight="bold" fill="#222">B2B-Promo</text>
+  <text x="760" y="65" font-size="10" fill="#555">내 신청 목록 · 마이페이지 · 로그아웃</text>
+
+  <text x="396" y="108" font-size="13" font-weight="bold" fill="#222">진행 중인 프로모션</text>
+  <line x1="380" y1="120" x2="950" y2="120" stroke="#ccc" stroke-width="1"/>
+
+  <!-- 3-col grid cards -->
+  <!-- card A -->
+  <rect x="396" y="134" width="168" height="200" rx="6" fill="#ffffff" stroke="#999" stroke-width="1.5"/>
+  <rect x="408" y="146" width="52" height="18" rx="9" fill="none" stroke="#666" stroke-width="1"/>
+  <text x="434" y="159" font-size="9" fill="#555" text-anchor="middle">가격할인</text>
+  <text x="408" y="192" font-size="12.5" fill="#222">여름 성수기</text>
+  <text x="408" y="210" font-size="12.5" fill="#222">특가</text>
+
+  <!-- card B (coupon event) -->
+  <rect x="580" y="134" width="168" height="200" rx="6" fill="#ffffff" stroke="#999" stroke-width="1.5"/>
+  <rect x="592" y="146" width="34" height="18" rx="9" fill="none" stroke="#666" stroke-width="1"/>
+  <text x="609" y="159" font-size="9" fill="#555" text-anchor="middle">1+1</text>
+  <rect x="630" y="146" width="66" height="18" rx="9" fill="none" stroke="#b8860b" stroke-width="1"/>
+  <text x="663" y="159" font-size="9" fill="#8a6600" text-anchor="middle">쿠폰이벤트</text>
+  <text x="592" y="192" font-size="12.5" fill="#222">신제품 런칭</text>
+  <text x="592" y="210" font-size="12.5" fill="#222">1+1</text>
+  <text x="592" y="232" font-size="10.5" fill="#333">잔여 27 / 50명</text>
+  <rect x="592" y="240" width="140" height="8" rx="4" fill="#eee" stroke="#999" stroke-width="1"/>
+  <rect x="592" y="240" width="76" height="8" rx="4" fill="#999"/>
+
+  <!-- card C -->
+  <rect x="764" y="134" width="168" height="200" rx="6" fill="#ffffff" stroke="#999" stroke-width="1.5"/>
+  <rect x="776" y="146" width="60" height="18" rx="9" fill="none" stroke="#666" stroke-width="1"/>
+  <text x="806" y="159" font-size="9" fill="#555" text-anchor="middle">샘플증정</text>
+  <text x="776" y="192" font-size="12.5" fill="#222">신메뉴 샘플</text>
+  <text x="776" y="210" font-size="12.5" fill="#222">신청</text>
+
+  <text x="396" y="352" font-size="10" fill="#777">카드 3열 그리드로 확장 (동일 데이터)</text>
+
+  <!-- footer note -->
+  <rect x="380" y="392" width="570" height="150" fill="#fbfbfb" stroke="#ddd" stroke-width="1"/>
+  <text x="396" y="416" font-size="11.5" font-weight="bold" fill="#333">참고 (docs/7-wireframe.md 1.3절)</text>
+  <text x="396" y="438" font-size="10.5" fill="#555">표시 데이터: Promotion(title, type) + 쿠폰이벤트 부착 시 잔여 정원(capacity - applied_count)</text>
+  <text x="396" y="456" font-size="10.5" fill="#555">사용자 액션: 카드 탭/클릭 → PromotionDetailPage 이동 (UC-2 → UC-3/4)</text>
+  <text x="396" y="474" font-size="10.5" fill="#555">관련 규칙: BR-9(게시된 프로모션만 노출), BR-10(종료된 프로모션은 목록에서 제외)</text>
+  <text x="396" y="492" font-size="10.5" fill="#555">반응형: 모바일 세로 1열 카드 → 데스크탑 3열 그리드 (PRD 6.1절 모바일 우선)</text>
+  <text x="396" y="514" font-size="10" fill="#999">※ 저해상도 와이어프레임 샘플 — 실제 색상/폰트/간격은 구현 시 결정</text>
+</svg>

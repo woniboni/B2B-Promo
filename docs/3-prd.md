@@ -8,6 +8,7 @@
 | v1.2 | 2026-08-13 | Day1 일정에 JWT 이중 토큰 발급 작업 명시 및 지연 시 폴백 리스크 추가, 확률분포 검증 기준(200회 이상, ±10%p) 구체화, 도메인 정의서 BR-6 역참조에 UC-7 추가(동기화) |
 | v1.3 | 2026-08-13 | docs 전체 정합성 교차 검토 결과 반영: UC-6 행 BR-9 근거 제거(해당 BR 없음), UC-5 행에 BR-8 추가, 5.1절 EX-5 소속 UC 자기모순 수정(UC-1로 정정), "8절 NFR 참조" 절 번호 오기를 "6.2절"로 수정, 도메인 정의서 참조 버전을 v1.5로 갱신 |
 | v1.4 | 2026-08-13 | 6.3 보안: Refresh Token 저장 방식에서 httpOnly 쿠키를 제외, Access Token과 동일하게 클라이언트 측(Zustand/localStorage) 저장으로 단순화. 관련 XSS 노출 트레이드오프를 ponytail 코멘트로 명시 |
+| v1.5 | 2026-08-13 | docs 정합성 교차 검토 결과 반영: 6.3절 Access Token 저장 위치 서술에 localStorage 명시(Refresh Token 서술과 대칭화) |
 
 > 본 문서는 `docs/1-domain-definition.md` (v1.5)를 기반으로 작성되었으며, 비즈니스 규칙(BR-1~11), 유스케이스(UC-1~9), 예외케이스(EX-1~5) 번호는 해당 문서와 동일하게 참조한다.
 
@@ -121,7 +122,7 @@ EX-1~4는 위 Must 유스케이스 중 UC-3/UC-4/UC-5에 종속된 분기 로직
 ### 6.3 보안 (최소 범위)
 - 비밀번호는 해시(bcrypt 등)하여 저장, 평문 저장 금지.
 - **인증은 JWT 기반, Access Token + Refresh Token 이중 토큰 방식을 적용한다.**
-  - **Access Token**: 짧은 만료(예: 15분). 클라이언트 메모리(Zustand 전역 상태)에 보관하며, API 요청 시 `Authorization: Bearer` 헤더로 전송한다. 만료 시 매 요청마다 재로그인시키지 않고 아래 재발급 절차를 거친다.
+  - **Access Token**: 짧은 만료(예: 15분). 클라이언트 측(Zustand 전역 상태, localStorage에 영속화)에 보관하며, API 요청 시 `Authorization: Bearer` 헤더로 전송한다. 만료 시 매 요청마다 재로그인시키지 않고 아래 재발급 절차를 거친다.
   - **Refresh Token**: 긴 만료(예: 7일). Access Token과 동일하게 클라이언트 측(Zustand 전역 상태, localStorage에 영속화)에 저장한다.
   - **재발급 흐름**: Access Token 만료(401) 시 클라이언트가 저장해둔 Refresh Token을 요청 바디에 실어 `POST /auth/refresh`를 호출하면, 서버가 이를 검증하여 새 Access Token을 발급한다. 로그아웃 시 클라이언트 저장소의 두 토큰을 모두 제거한다.
   - Refresh Token은 서명 검증만으로 유효성을 판단하는 상태 비저장(stateless) 방식으로 구현한다(별도 DB 저장/블랙리스트 없음).

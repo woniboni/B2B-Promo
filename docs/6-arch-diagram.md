@@ -6,7 +6,7 @@
 | v1.0 | 2026-08-13 | 최초 작성 |
 | v1.1 | 2026-08-13 | 프론트엔드 컴포넌트 구조 다이어그램 추가 |
 
-> 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.4), `docs/5-project-principle.md`(v1.0)를 기반으로 작성되었다. PRD v1.4에 따라 Access/Refresh 토큰은 모두 클라이언트 측(Zustand/localStorage)에 저장하며 httpOnly 쿠키는 사용하지 않는다. 로드밸런서·캐시서버·메시지큐·CDN·모니터링 등 이번 MVP 범위에 없는 인프라는 다이어그램에 포함하지 않는다.
+> 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/5-project-principle.md`(v1.1)를 기반으로 작성되었다. PRD v1.5에 따라 Access/Refresh 토큰은 모두 클라이언트 측(Zustand/localStorage)에 저장하며 httpOnly 쿠키는 사용하지 않는다. 로드밸런서·캐시서버·메시지큐·CDN·모니터링 등 이번 MVP 범위에 없는 인프라는 다이어그램에 포함하지 않는다.
 
 ---
 
@@ -108,7 +108,7 @@ sequenceDiagram
   S-->>B: 정상 응답
 ```
 
-- Access/Refresh 토큰 모두 클라이언트(Zustand + localStorage 영속화)에 저장하며 httpOnly 쿠키는 사용하지 않는다(PRD v1.4).
+- Access/Refresh 토큰 모두 클라이언트(Zustand + localStorage 영속화)에 저장하며 httpOnly 쿠키는 사용하지 않는다(PRD v1.5).
 - Access Token 만료(401) 시에만 `/auth/refresh`를 호출해 Refresh Token으로 재발급받고, 원 요청을 재시도한다.
 - Refresh Token은 서명 검증만 하는 stateless 방식이라 서버에 별도 저장소가 없다.
   - ponytail: 두 토큰이 모두 JS 접근 가능한 저장소에 있어 XSS 시 탈취 위험이 크다. 교육용 MVP 범위에서 감수하며, 실서비스 전환 시 Refresh Token을 httpOnly 쿠키로 승격한다(PRD 6.3절과 동일).
