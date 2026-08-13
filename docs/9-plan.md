@@ -4,8 +4,9 @@
 | 버전 | 날짜/시간 | 변경 내용 |
 |---|---|---|
 | v1.0 | 2026-08-13 | 최초 작성 |
+| v1.1 | 2026-08-13 | docs 정합성 교차 검토 결과 반영: 헤더 기반 문서 목록에 누락된 `4-user-scenario.md`(v1.1) 추가, BE-4/FE-6 관련 문서에 BR-10 보완, BE-5 관련 문서에 BR-11 보완, 0.3절 의존 관계 다이어그램에 누락된 BE-8→FE-8 엣지 추가 |
 
-> 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/5-project-principle.md`(v1.1), `docs/6-arch-diagram.md`(v1.1), `docs/7-wireframe.md`(v1.2), `docs/8-erd.md`(v1.1), `docs/8-schema.sql`(v1.1)을 기반으로 작성되었다. UC/BR/EX 번호는 도메인 정의서와 동일하게 참조하며, 파일 경로는 `5-project-principle.md` 6~7절 디렉토리 구조를 그대로 따른다.
+> 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1), `docs/5-project-principle.md`(v1.1), `docs/6-arch-diagram.md`(v1.1), `docs/7-wireframe.md`(v1.2), `docs/8-erd.md`(v1.1), `docs/8-schema.sql`(v1.1)을 기반으로 작성되었다. UC/BR/EX 번호는 도메인 정의서와 동일하게 참조하며, 파일 경로는 `5-project-principle.md` 6~7절 디렉토리 구조를 그대로 따른다.
 
 ---
 
@@ -57,6 +58,7 @@ flowchart LR
   FE6 --> FE7[FE-7 관리자 참여현황]
   BE7 --> FE7
   FE2 --> FE8[FE-8 마이페이지]
+  BE8 --> FE8
   FE5 --> FE9[FE-9 반응형 마무리]
   FE7 --> FE9
   FE5 --> QA3[QA-3 예외케이스 QA]
@@ -201,7 +203,7 @@ flowchart LR
 | 항목 | 내용 |
 |---|---|
 | 선행 Task | BE-2 |
-| 관련 문서 | UC-6(Should), UC-7(Must), BR-6, BR-9 |
+| 관련 문서 | UC-6(Should), UC-7(Must), BR-6, BR-9, BR-10 |
 
 **수행 작업**
 - `src/db/couponEvents.queries.js` 작성
@@ -228,7 +230,7 @@ flowchart LR
 | 항목 | 내용 |
 |---|---|
 | 선행 Task | BE-3, BE-4 |
-| 관련 문서 | UC-3, UC-4, BR-3~BR-8, EX-1~EX-4 / `3-prd.md` 6.2절 |
+| 관련 문서 | UC-3, UC-4, BR-3~BR-8, BR-11, EX-1~EX-4 / `3-prd.md` 6.2절 |
 
 > PRD 9절 리스크: 이 프로젝트에서 기술적으로 가장 까다로운 부분이므로 **Day 2 최우선으로 착수**한다.
 
@@ -465,7 +467,7 @@ flowchart LR
 | 항목 | 내용 |
 |---|---|
 | 선행 Task | FE-2, BE-4 |
-| 관련 문서 | UC-6(Should), UC-7(Must), BR-6, BR-9 / `7-wireframe.md` 2.1~2.2절 |
+| 관련 문서 | UC-6(Should), UC-7(Must), BR-6, BR-9, BR-10 / `7-wireframe.md` 2.1~2.2절 |
 
 **수행 작업**
 - `src/pages/admin/AdminPromotionListPage.jsx`: 전체 프로모션 테이블(제목·유형·상태·쿠폰이벤트 여부), 게시/종료/현황 액션

@@ -6,8 +6,9 @@
 | v1.0 | 2026-08-13 | 최초 작성 |
 | v1.1 | 2026-08-13 | 1.3 PromotionListPage에 SVG 와이어프레임 샘플 이미지(모바일/데스크탑 반응형 비교) 추가 |
 | v1.2 | 2026-08-13 | docs 정합성 교차 검토 결과 반영: 3절의 잘못된 절 번호 참조("5-project-principle.md 6.1절"→"PRD 6.1절") 수정, 1.5 MyApplicationsPage 관련 BR/EX 목록에 누락된 BR-5/BR-6/EX-4(재신청 시 정원 마감 재확인) 추가 |
+| v1.3 | 2026-08-13 | docs 정합성 교차 검토 결과 반영: 4-user-scenario.md 참조 버전을 v1.1로 갱신 |
 
-> 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.0), `docs/5-project-principle.md`(v1.1)를 기반으로 작성되었으며, UC/BR/EX 번호는 위 문서들과 동일하게 참조한다. 텍스트 기반 ASCII 박스 다이어그램으로 레이아웃 구조만 표현하며, 실제 비주얼 디자인(색상/폰트/간격 등)은 다루지 않는다. 접근성(a11y)은 프로젝트 범위 밖이므로 본 문서에서도 별도로 다루지 않는다.
+> 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1), `docs/5-project-principle.md`(v1.1)를 기반으로 작성되었으며, UC/BR/EX 번호는 위 문서들과 동일하게 참조한다. 텍스트 기반 ASCII 박스 다이어그램으로 레이아웃 구조만 표현하며, 실제 비주얼 디자인(색상/폰트/간격 등)은 다루지 않는다. 접근성(a11y)은 프로젝트 범위 밖이므로 본 문서에서도 별도로 다루지 않는다.
 
 ## 범례
 - `[ 버튼 ]` : 클릭/탭 가능한 액션 버튼
