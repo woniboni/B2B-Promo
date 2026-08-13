@@ -5,6 +5,8 @@
 |---|---|---|
 | v1.0 | 2026-08-13 | 최초 작성 |
 | v1.1 | 2026-08-13 | docs 정합성 교차 검토 결과 반영: 헤더 기반 문서 목록에 누락된 `4-user-scenario.md`(v1.1) 추가, BE-4/FE-6 관련 문서에 BR-10 보완, BE-5 관련 문서에 BR-11 보완, 0.3절 의존 관계 다이어그램에 누락된 BE-8→FE-8 엣지 추가 |
+| v1.2 | 2026-08-13 | DB-1 수행 완료: `b2b_promo` 생성, `backend/migrations/001_init.sql` 실행 및 7개 완료 조건 실측 검증(테이블 6개, BR-3/BR-5 UNIQUE, BR-6 CHECK, BR-8 GENERATED 컬럼 계산) 후 체크박스 반영 |
+| v1.3 | 2026-08-13 | DB-2 수행 완료: `backend/scripts/seedAdmin.js` 작성(ON CONFLICT DO NOTHING 방식), 4개 완료 조건 실측 검증(role=admin, bcrypt 해시, 재실행 시 중복 없음, partners 행 미생성) 후 체크박스 반영. 시딩 스크립트 실행에 필요한 최소 패키지(pg/bcrypt/dotenv)만 설치했으며 Express 등 전체 스캐폴딩(BE-1)은 별도 수행 필요, `.env`의 접속 DB를 `b2b_promo`로 갱신 |
 
 > 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1), `docs/5-project-principle.md`(v1.1), `docs/6-arch-diagram.md`(v1.1), `docs/7-wireframe.md`(v1.2), `docs/8-erd.md`(v1.1), `docs/8-schema.sql`(v1.1)을 기반으로 작성되었다. UC/BR/EX 번호는 도메인 정의서와 동일하게 참조하며, 파일 경로는 `5-project-principle.md` 6~7절 디렉토리 구조를 그대로 따른다.
 
@@ -89,13 +91,13 @@ flowchart LR
 - 마이그레이션 실행으로 6개 테이블 생성: `users`, `partners`, `promotions`, `coupon_events`, `applications`, `draw_results`
 
 **완료 조건**
-- [ ] `b2b_promo` 데이터베이스가 생성되고 접속이 확인된다
-- [ ] `backend/migrations/001_init.sql` 실행이 에러 없이 완료된다
-- [ ] `\dt` 조회 시 6개 테이블이 모두 존재한다
-- [ ] `applications` 테이블에 `(promotion_id, partner_id)` 복합 UNIQUE 제약이 존재한다 (BR-3)
-- [ ] `draw_results.application_id`에 UNIQUE 제약이 존재한다 (BR-5)
-- [ ] `coupon_events`에 `capacity = 50` 및 `applied_count <= capacity` CHECK 제약이 존재한다 (BR-6)
-- [ ] `draw_results`에 임의 행을 INSERT하면 `expires_at`이 `confirmed_at + 1개월`로 자동 계산된다 (BR-8)
+- [x] `b2b_promo` 데이터베이스가 생성되고 접속이 확인된다
+- [x] `backend/migrations/001_init.sql` 실행이 에러 없이 완료된다
+- [x] `\dt` 조회 시 6개 테이블이 모두 존재한다
+- [x] `applications` 테이블에 `(promotion_id, partner_id)` 복합 UNIQUE 제약이 존재한다 (BR-3)
+- [x] `draw_results.application_id`에 UNIQUE 제약이 존재한다 (BR-5)
+- [x] `coupon_events`에 `capacity = 50` 및 `applied_count <= capacity` CHECK 제약이 존재한다 (BR-6)
+- [x] `draw_results`에 임의 행을 INSERT하면 `expires_at`이 `confirmed_at + 1개월`로 자동 계산된다 (BR-8)
 
 ---
 
@@ -112,10 +114,10 @@ flowchart LR
 - 중복 실행에 대비해 이메일 기준 UPSERT 또는 존재 시 skip 처리
 
 **완료 조건**
-- [ ] `node backend/scripts/seedAdmin.js` 실행 시 관리자 계정이 생성된다
-- [ ] 생성된 계정의 `role`이 `'admin'`이고 `password_hash`가 평문이 아니다 (bcrypt 해시)
-- [ ] 스크립트를 2회 연속 실행해도 에러 없이 종료되고 중복 계정이 생기지 않는다
-- [ ] 시딩된 관리자 계정에는 대응하는 `partners` 행이 생성되지 않는다 (관리자는 거래처가 아님)
+- [x] `node backend/scripts/seedAdmin.js` 실행 시 관리자 계정이 생성된다
+- [x] 생성된 계정의 `role`이 `'admin'`이고 `password_hash`가 평문이 아니다 (bcrypt 해시)
+- [x] 스크립트를 2회 연속 실행해도 에러 없이 종료되고 중복 계정이 생기지 않는다
+- [x] 시딩된 관리자 계정에는 대응하는 `partners` 행이 생성되지 않는다 (관리자는 거래처가 아님)
 
 ---
 
