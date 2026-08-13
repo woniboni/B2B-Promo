@@ -7,6 +7,7 @@
 | v1.1 | 2026-08-13 | 6.3 보안: 인증 방식을 JWT Access Token + Refresh Token 이중 토큰 방식으로 구체화(Access는 메모리/Zustand, Refresh는 httpOnly 쿠키, 재발급 엔드포인트 명시) |
 | v1.2 | 2026-08-13 | Day1 일정에 JWT 이중 토큰 발급 작업 명시 및 지연 시 폴백 리스크 추가, 확률분포 검증 기준(200회 이상, ±10%p) 구체화, 도메인 정의서 BR-6 역참조에 UC-7 추가(동기화) |
 | v1.3 | 2026-08-13 | docs 전체 정합성 교차 검토 결과 반영: UC-6 행 BR-9 근거 제거(해당 BR 없음), UC-5 행에 BR-8 추가, 5.1절 EX-5 소속 UC 자기모순 수정(UC-1로 정정), "8절 NFR 참조" 절 번호 오기를 "6.2절"로 수정, 도메인 정의서 참조 버전을 v1.5로 갱신 |
+| v1.4 | 2026-08-13 | 6.3 보안: Refresh Token 저장 방식에서 httpOnly 쿠키를 제외, Access Token과 동일하게 클라이언트 측(Zustand/localStorage) 저장으로 단순화. 관련 XSS 노출 트레이드오프를 ponytail 코멘트로 명시 |
 
 > 본 문서는 `docs/1-domain-definition.md` (v1.5)를 기반으로 작성되었으며, 비즈니스 규칙(BR-1~11), 유스케이스(UC-1~9), 예외케이스(EX-1~5) 번호는 해당 문서와 동일하게 참조한다.
 
@@ -121,9 +122,10 @@ EX-1~4는 위 Must 유스케이스 중 UC-3/UC-4/UC-5에 종속된 분기 로직
 - 비밀번호는 해시(bcrypt 등)하여 저장, 평문 저장 금지.
 - **인증은 JWT 기반, Access Token + Refresh Token 이중 토큰 방식을 적용한다.**
   - **Access Token**: 짧은 만료(예: 15분). 클라이언트 메모리(Zustand 전역 상태)에 보관하며, API 요청 시 `Authorization: Bearer` 헤더로 전송한다. 만료 시 매 요청마다 재로그인시키지 않고 아래 재발급 절차를 거친다.
-  - **Refresh Token**: 긴 만료(예: 7일). XSS로부터 보호하기 위해 `httpOnly`+`Secure` 쿠키에 저장하며, 클라이언트 JS(Zustand/localStorage)에서는 직접 접근하지 않는다.
-  - **재발급 흐름**: Access Token 만료(401) 시 클라이언트가 `POST /auth/refresh`를 호출하면, 서버가 쿠키의 Refresh Token을 검증하여 새 Access Token을 발급한다. 로그아웃 시 Refresh Token 쿠키를 즉시 삭제한다.
+  - **Refresh Token**: 긴 만료(예: 7일). Access Token과 동일하게 클라이언트 측(Zustand 전역 상태, localStorage에 영속화)에 저장한다.
+  - **재발급 흐름**: Access Token 만료(401) 시 클라이언트가 저장해둔 Refresh Token을 요청 바디에 실어 `POST /auth/refresh`를 호출하면, 서버가 이를 검증하여 새 Access Token을 발급한다. 로그아웃 시 클라이언트 저장소의 두 토큰을 모두 제거한다.
   - Refresh Token은 서명 검증만으로 유효성을 판단하는 상태 비저장(stateless) 방식으로 구현한다(별도 DB 저장/블랙리스트 없음).
+    - ponytail: 두 토큰이 모두 JS로 접근 가능한 저장소(localStorage)에 있어, httpOnly 쿠키 방식 대비 XSS 발생 시 탈취 위험이 크다. 교육용 MVP·낮은 실사용자 트래픽 범위에서 감수하는 단순화이며, 실서비스 전환 시 Refresh Token을 httpOnly 쿠키로 승격한다.
     - ponytail: 탈취된 Refresh Token의 로그아웃 전 즉시 무효화(revocation)는 지원하지 않는 단순 구현. 필요해지면 Refresh Token을 DB에 저장하고 로그아웃/재발급 시 폐기(rotation)하는 방식으로 승격.
 - 별도 OAuth/SSO 등은 범위 밖.
 
@@ -154,7 +156,7 @@ EX-1~4는 위 Must 유스케이스 중 UC-3/UC-4/UC-5에 종속된 분기 로직
 
 | Day | 목표 | 포함 작업 |
 |---|---|---|
-| Day 1 | 기반 구축 + 인증 + 조회 흐름 | 프로젝트 스캐폴딩(React+Express+pg), PostgreSQL 스키마 생성(User/Partner/Promotion/CouponEvent/Application/DrawResult), 관리자 계정 시딩, **UC-1**(회원가입/로그인 + JWT Access/Refresh 이중 토큰 발급, `/auth/refresh` 재발급 엔드포인트, httpOnly 쿠키 설정 — 6.3절), **UC-2**(프로모션 목록/상세 조회, 반응형 레이아웃 기본 골격), **UC-6/UC-7**(관리자 프로모션 등록·수정·게시/종료, Should 항목인 임시저장은 status값 지원으로 축소) |
+| Day 1 | 기반 구축 + 인증 + 조회 흐름 | 프로젝트 스캐폴딩(React+Express+pg), PostgreSQL 스키마 생성(User/Partner/Promotion/CouponEvent/Application/DrawResult), 관리자 계정 시딩, **UC-1**(회원가입/로그인 + JWT Access/Refresh 이중 토큰 발급, `/auth/refresh` 재발급 엔드포인트 — 6.3절), **UC-2**(프로모션 목록/상세 조회, 반응형 레이아웃 기본 골격), **UC-6/UC-7**(관리자 프로모션 등록·수정·게시/종료, Should 항목인 임시저장은 status값 지원으로 축소) |
 | Day 2 | 핵심 참여 흐름 (도메인 핵심 가치) | **UC-3**(참여 신청, 선착순 50명 원자적 처리 + EX-1/EX-2 처리), **UC-4**(쿠폰 추첨 로직 + 확률분포 검증), **UC-5**(내 신청 목록 조회/취소 + EX-3/EX-4 처리), **UC-8**(관리자 참여 현황 확인) |
 | Day 3 | 마무리 + 검증 | 반응형 UI 다듬기(모바일/데스크탑 전 화면 점검), 동시성 재현 스크립트로 50명 마감 검증, 예외 케이스(EX-1~5) 수동 QA, **UC-9(Could, 시간 남을 시)**, 버그 수정 및 시연 준비 |
 
