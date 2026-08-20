@@ -3,6 +3,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middlewares/errorHandler');
+const authRoutes = require('./routes/auth.routes');
+const { router: promotionsRoutes, adminRouter: adminPromotionsRoutes } = require('./routes/promotions.routes');
+const applicationsRoutes = require('./routes/applications.routes');
+const usersRoutes = require('./routes/users.routes');
 
 const app = express();
 
@@ -14,14 +18,11 @@ app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// ponytail: temporary placeholder, exists only to prove errorHandler wiring, remove once real routes exist
-app.get('/__throw', (req, res, next) => {
-  try {
-    throw new Error('test error');
-  } catch (err) {
-    next(err);
-  }
-});
+app.use('/auth', authRoutes);
+app.use('/promotions', promotionsRoutes);
+app.use('/admin/promotions', adminPromotionsRoutes);
+app.use(applicationsRoutes);
+app.use('/users', usersRoutes);
 
 app.use(errorHandler);
 

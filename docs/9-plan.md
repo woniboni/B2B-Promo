@@ -8,6 +8,14 @@
 | v1.2 | 2026-08-13 | DB-1 수행 완료: `b2b_promo` 생성, `backend/migrations/001_init.sql` 실행 및 7개 완료 조건 실측 검증(테이블 6개, BR-3/BR-5 UNIQUE, BR-6 CHECK, BR-8 GENERATED 컬럼 계산) 후 체크박스 반영 |
 | v1.3 | 2026-08-13 | DB-2 수행 완료: `backend/scripts/seedAdmin.js` 작성(ON CONFLICT DO NOTHING 방식), 4개 완료 조건 실측 검증(role=admin, bcrypt 해시, 재실행 시 중복 없음, partners 행 미생성) 후 체크박스 반영. 시딩 스크립트 실행에 필요한 최소 패키지(pg/bcrypt/dotenv)만 설치했으며 Express 등 전체 스캐폴딩(BE-1)은 별도 수행 필요, `.env`의 접속 DB를 `b2b_promo`로 갱신 |
 | v1.4 | 2026-08-13 | BE-1 수행 완료: `express`/`jsonwebtoken`/`cors` 추가 설치, `src/app.js`(Express 앱, 헬스체크 `GET /`·에러 유발용 임시 라우트 `GET /__throw`, CORS는 `FRONTEND_ORIGIN` 단일 origin만 허용) / `src/server.js`(리스닝 전담) / `src/db/pool.js`(raw `pg.Pool`) / `src/middlewares/errorHandler.js` 작성. `.env`에 `PORT`, `FRONTEND_ORIGIN` 추가(`.gitignore`로 이미 커밋 제외 확인). 이번 세션에서 프로젝트 원칙(5-project-principle.md 4절, 테스트 프레임워크 미도입)을 사용자가 명시적으로 override하여 Jest+supertest 테스트 스위트(`backend/tests/*.test.js`)를 도입, `src/**/*.js` 기준 문(statement)/라인/함수/분기 커버리지 100% 달성(11개 테스트 통과) 후 6개 완료 조건을 실측 검증(서버 기동·200 응답·SELECT 1 연결·`.env` 미커밋·errorHandler JSON 에러 응답·ORM 미사용)하고 체크박스 반영 |
+| v1.5 | 2026-08-20 | BE-2 수행 완료: `src/db/users.queries.js`(findByEmail/insertUser·role 항상 'partner' 고정/insertPartner), `src/controllers/auth.controller.js`(signup은 pool.connect() 트랜잭션으로 User+Partner 동시 생성 후 이메일 중복(23505)→409, login은 bcrypt.compare 후 Access(15m)/Refresh(7d) JWT 동시 발급, refresh는 jwt.verify로 stateless 검증) + `src/routes/auth.routes.js`, `src/middlewares/auth.js`(Bearer 토큰 검증, admin 체크는 BE-4에서 컨트롤러가 처리하도록 위임) 작성. `src/app.js`에 `/auth` 라우트 연결하고 BE-1의 임시 라우트 `GET /__throw` 제거(테스트도 함께 정리). `.env`에 `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET` 추가. `backend/tests/auth.test.js` 신규 작성(`test-auth-%` 이메일 패턴으로만 정리해 DB-2 시딩 관리자 계정 보존), 총 25개 테스트 통과, 커버리지 문 98%/라인 97.97%/분기 87.5%/함수 100%(잔여 미커버 분기는 방어적 generic catch 2곳). 9개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.6 | 2026-08-20 | BE-3 수행 완료: `src/db/promotions.queries.js`(`listPublished()`는 `status='published'`만 조회(BR-9/BR-10), `findById(id)`는 status 제한 없이 조회, `LEFT JOIN coupon_events` 결과를 `mapRow()`로 `{...promotion, coupon_event}` 중첩 객체로 매핑, 없으면 `coupon_event: null`) + `src/controllers/promotions.controller.js`(`list`, `getById` — 비정수 `:id`는 pg 캐스팅 500 대신 즉시 404) + `src/routes/promotions.routes.js`(전체 라우트에 기존 인증 미들웨어 적용) 신규 작성. `src/app.js`에 `/promotions` 라우트 연결. `backend/tests/promotions.test.js` 신규 작성(BE-4 관리자 등록 API가 아직 없어 fixture는 테스트 내에서 pool.query로 직접 INSERT, `test-promo-%` 이메일 패턴으로만 계정 정리), 총 35개 테스트 통과, 커버리지 문 97.01%/라인 96.99%/분기 89.58%/함수 100%. 6개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.7 | 2026-08-20 | 이 세션부터 백엔드 테스트는 사용자가 미리 구동해둔 개발 서버(`npm run dev`, nodemon, `PORT=3000`)를 대상으로 HTTP 요청(supertest에 base URL 문자열 전달)을 보내는 방식으로 전환(기존 in-process `require(app)` 방식 폐기). `tests/app.test.js`/`auth.test.js`/`promotions.test.js`를 이 방식으로 갱신. 이에 따라 Jest 커버리지 리포트는 서버 프로세스에서 실행되는 라우트/컨트롤러/쿼리 모듈을 더 이상 계측하지 못함(테스트 프로세스에서 직접 require하는 모듈만 집계) — 이후 태스크의 "커버리지 90%+"는 계측치 대신 완료조건 매핑 기준 테스트 시나리오 커버리지로 검증 |
+| v1.8 | 2026-08-20 | BE-4 수행 완료: `src/db/couponEvents.queries.js`(`insertCouponEvent` — capacity는 DB DEFAULT 50 사용, BR-6) 신규, `src/db/promotions.queries.js`에 `listAll`/`insertPromotion`/`updatePromotion`/`updateStatus` 추가, `src/controllers/promotions.controller.js`에 `requireAdmin` 헬퍼(별도 미들웨어 없이 컨트롤러 조건문) + `adminList`/`adminCreate`(트랜잭션으로 promotion+coupon_event 동시 생성)/`adminUpdate`/`adminUpdateStatus`(status 화이트리스트 published/closed) 추가, `src/routes/promotions.routes.js`가 `{router, adminRouter}` 객체로 export하도록 변경. `src/app.js`에 `/admin/promotions` 라우트 연결. `backend/tests/adminPromotions.test.js` 신규 작성(관리자 로그인은 DB-2 시딩 계정 재사용, `test-adminpromo-%` 패턴으로만 정리, 생성한 promotion/coupon_event id만 정확히 삭제), 총 51개 테스트 통과(v1.7 방침에 따라 실행 중인 서버 대상). 7개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.9 | 2026-08-20 | BE-5 수행 완료(⭐ 최고 난이도): `src/db/applications.queries.js`(신규, 조회/삽입/재활성화/취소), `src/db/drawResults.queries.js`(신규, `drawDiscountRate()` 순수함수(BR-4 확률분포)와 `upsertDrawResult`(`ON CONFLICT (application_id) DO UPDATE`, BR-5)), `src/db/users.queries.js`에 `findPartnerIdByUserId` 추가, `src/controllers/applications.controller.js`(신규) `apply`(promotion 조회 후 closed면 409, 단일 트랜잭션 내에서 중복 신청 확인→조건부 원자 증가 `UPDATE coupon_events SET applied_count=applied_count+1 WHERE id=$1 AND applied_count<capacity RETURNING ...`(BR-6/BR-7, TOCTOU 방지)→신청 upsert→쿠폰 있으면 추첨+draw_results upsert→COMMIT, 마감/중복 시 ROLLBACK으로 흔적 없음)/`cancel`(소유권 검증 403, 프로모션 상태 무관 취소 허용 BR-11, applied_count 미조정). `src/routes/applications.routes.js` 신규, `src/app.js`에 연결. **구현 중 발견한 버그 수정**: 라우터를 app 루트에 마운트하면서 `router.use(auth)`로 전체를 감쌌더니 이 라우터가 처리하지 않는 경로(예: 존재하지 않는 라우트)까지 auth가 가로채 404 대신 401을 반환하는 문제 발견 → 라우트별 `auth` 개별 적용으로 수정(회귀 테스트 `app.test.js`가 이 문제를 포착함). `backend/tests/applications.test.js` 신규 작성(50명 마감 조건은 `applied_count`를 직접 49로 세팅해 결정적으로 재현, `test-be5-%` 패턴으로만 계정 정리, FK 순서대로 draw_results→applications→coupon_events→promotions 정리), 총 66개 테스트 통과. 13개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.10 | 2026-08-20 | BE-6 수행 완료: `src/db/applications.queries.js`에 `findByPartnerId(partnerId)` 추가, `src/controllers/applications.controller.js`에 `myApplications` 추가(새 JOIN 설계 없이 기존 `promotions.queries.findById`/`drawResults.queries.findByApplicationId`를 N+1로 재사용해 `{...application, promotion, draw_result}` 조립 — MVP 데이터 규모상 가장 단순한 선택, 파트너 없는 토큰은 빈 배열 200 응답), `src/routes/applications.routes.js`에 `GET /applications/me`를 기존 라우트별 `auth` 개별 적용 패턴으로 추가(`router.use(auth)` 재도입 안 함). `backend/tests/applications-me.test.js` 신규 작성(파트너 A/B 2계정, 일반/쿠폰당첨/취소/종료후유지 4개 프로모션 시나리오, `test-be6-%` 패턴으로만 정리), 총 72개 테스트 통과. 5개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.11 | 2026-08-20 | BE-7 수행 완료: `src/db/applications.queries.js`에 `countByStatus`/`discountDistribution`/`listByPromotion` 3개 집계 쿼리 추가, `src/controllers/promotions.controller.js`에 기존 `requireAdmin` 재사용한 `adminApplicationsSummary` 추가(병렬 쿼리 조회 후 상태별 건수/할인율 분포/신청 거래처 목록 조립), `src/routes/promotions.routes.js`의 기존 `adminRouter`에 `GET /:id/applications` 추가. **구현 검토 중 발견한 버그 수정**: `draw_results.discount_rate`가 `NUMERIC(5,2)` 컬럼이라 `pg`가 기본적으로 문자열("5.00")로 반환하는데, 이를 캐스팅 없이 `discount_distribution`의 정수 키(5/10/15/20)에 그대로 대입하면 매칭되지 않고 별도 문자열 키가 생겨 분포가 전부 0으로 보이는 문제 발견 → 두 쿼리 모두 `discount_rate::int`로 캐스팅해 수정(BE-5 응답에서는 컨트롤러가 `Number()`로 방어하고 있었으나 BE-7 신규 쿼리에는 없었음). `backend/tests/adminApplicationsSummary.test.js` 신규 작성(쿠폰 이벤트 프로모션에 파트너 A/B/C 신청 후 C 취소, 일반 프로모션에 D 신청, `test-be7-%` 패턴으로만 정리), 총 81개 테스트 통과. 5개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.12 | 2026-08-20 | BE-8 수행 완료: `src/db/users.queries.js`에 `findById`/`updateProfile`/`updatePassword` 추가, `src/controllers/users.controller.js`(신규) `getMe`(기존 login의 password_hash 제외 destructuring 패턴 재사용)/`updateMe`/`changePassword`(현재 비밀번호 bcrypt.compare 실패 시 400, 8자 미만 신규 비밀번호 400), `src/routes/users.routes.js`(신규, `/users` prefix로 좁게 마운트되어 `router.use(auth)` 전체 적용이 안전 — applications.routes.js처럼 앱 루트에 마운트되는 경우와 다름). `src/app.js`에 `/users` 라우트 연결. `backend/tests/users.test.js` 신규 작성(`test-users-%` 패턴으로만 정리), 총 89개 테스트 통과. **테스트 인프라 수정**: 전체 스위트를 Jest 기본(병렬 워커)으로 실행하면 여러 테스트 파일이 동시에 같은 하나의 실행 중인 개발 서버(v1.7 방침)를 두들겨 `beforeAll` 훅이 5초 타임아웃을 넘겨 실패하는 현상 발견(개별 실행 시엔 통과) → `package.json`의 `test` 스크립트를 `jest --runInBand`로 변경해 테스트 파일을 직렬 실행하도록 수정, 이후 89개 전부 통과 재확인. 4개 완료 조건을 실측 검증 후 체크박스 반영 |
 
 > 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1), `docs/5-project-principle.md`(v1.1), `docs/6-arch-diagram.md`(v1.1), `docs/7-wireframe.md`(v1.2), `docs/8-erd.md`(v1.1), `docs/8-schema.sql`(v1.1)을 기반으로 작성되었다. UC/BR/EX 번호는 도메인 정의서와 동일하게 참조하며, 파일 경로는 `5-project-principle.md` 6~7절 디렉토리 구조를 그대로 따른다.
 
@@ -165,15 +173,15 @@ flowchart LR
 - 관리자 권한 체크는 `User.role === 'admin'` 조건 확인 하나로 처리(별도 RBAC 프레임워크 금지)
 
 **완료 조건**
-- [ ] `POST /auth/signup` 성공 시 `users` 1행과 `partners` 1행이 함께 생성된다 (1:1)
-- [ ] 회원가입 도중 실패하면 트랜잭션 롤백으로 `users`/`partners` 어느 쪽도 남지 않는다
-- [ ] 중복 이메일로 회원가입 시 409(또는 4xx) 에러가 반환되고 계정이 생성되지 않는다
-- [ ] `POST /auth/login` 성공 시 Access Token과 Refresh Token이 모두 응답에 포함된다
-- [ ] 잘못된 비밀번호로 로그인 시 401이 반환되고 토큰이 발급되지 않는다
-- [ ] 토큰 없이 보호 라우트 호출 시 401이 반환된다 (BR-1, EX-5)
-- [ ] 만료/위조된 Access Token으로 보호 라우트 호출 시 401이 반환된다
-- [ ] `POST /auth/refresh`에 유효한 Refresh Token을 보내면 새 Access Token이 발급되고, 그 토큰으로 보호 라우트 호출이 성공한다
-- [ ] DB에 저장된 `password_hash`가 평문이 아니다
+- [x] `POST /auth/signup` 성공 시 `users` 1행과 `partners` 1행이 함께 생성된다 (1:1)
+- [x] 회원가입 도중 실패하면 트랜잭션 롤백으로 `users`/`partners` 어느 쪽도 남지 않는다
+- [x] 중복 이메일로 회원가입 시 409(또는 4xx) 에러가 반환되고 계정이 생성되지 않는다
+- [x] `POST /auth/login` 성공 시 Access Token과 Refresh Token이 모두 응답에 포함된다
+- [x] 잘못된 비밀번호로 로그인 시 401이 반환되고 토큰이 발급되지 않는다
+- [x] 토큰 없이 보호 라우트 호출 시 401이 반환된다 (BR-1, EX-5)
+- [x] 만료/위조된 Access Token으로 보호 라우트 호출 시 401이 반환된다
+- [x] `POST /auth/refresh`에 유효한 Refresh Token을 보내면 새 Access Token이 발급되고, 그 토큰으로 보호 라우트 호출이 성공한다
+- [x] DB에 저장된 `password_hash`가 평문이 아니다
 
 ---
 
@@ -192,12 +200,12 @@ flowchart LR
 - 모든 라우트에 인증 미들웨어 적용 (BR-1)
 
 **완료 조건**
-- [ ] `GET /promotions` 응답에 `status='published'` 프로모션만 포함된다 (BR-9)
-- [ ] `status='draft'`(임시저장) 프로모션이 목록에 노출되지 않는다
-- [ ] `status='closed'`(종료됨) 프로모션이 목록에 노출되지 않는다 (BR-10)
-- [ ] 쿠폰 이벤트가 부착된 프로모션 응답에 `capacity`, `applied_count`(또는 잔여 정원)가 포함된다
-- [ ] 쿠폰 이벤트가 없는 프로모션 응답에는 쿠폰 관련 필드가 null/부재로 명확히 구분된다
-- [ ] 비로그인(토큰 없음) 상태로 호출 시 401이 반환된다
+- [x] `GET /promotions` 응답에 `status='published'` 프로모션만 포함된다 (BR-9)
+- [x] `status='draft'`(임시저장) 프로모션이 목록에 노출되지 않는다
+- [x] `status='closed'`(종료됨) 프로모션이 목록에 노출되지 않는다 (BR-10)
+- [x] 쿠폰 이벤트가 부착된 프로모션 응답에 `capacity`, `applied_count`(또는 잔여 정원)가 포함된다
+- [x] 쿠폰 이벤트가 없는 프로모션 응답에는 쿠폰 관련 필드가 null/부재로 명확히 구분된다
+- [x] 비로그인(토큰 없음) 상태로 호출 시 401이 반환된다
 
 ---
 
@@ -218,13 +226,13 @@ flowchart LR
   - `GET /admin/promotions`: 관리자용 전체 목록(임시저장/게시됨/종료됨 모두 포함)
 
 **완료 조건**
-- [ ] 거래처 담당자(`role='partner'`) 토큰으로 관리자 API 호출 시 403이 반환된다
-- [ ] 프로모션을 `status='draft'`로 저장할 수 있고, 이 건은 `GET /promotions`(거래처용)에 노출되지 않는다 (UC-6)
-- [ ] `PATCH .../status`로 `published` 전환 시 즉시 `GET /promotions`에 노출된다 (BR-9)
-- [ ] `PATCH .../status`로 `closed` 전환 시 `GET /promotions`에서 제외된다 (BR-10)
-- [ ] 쿠폰 이벤트를 부착해 등록하면 `coupon_events` 행이 `capacity=50`, `applied_count=0`으로 생성된다 (BR-6)
-- [ ] 동일 프로모션에 쿠폰 이벤트를 2개 부착하려 하면 UNIQUE 제약으로 거부된다 (1:0..1)
-- [ ] `GET /admin/promotions`는 임시저장·게시됨·종료됨 프로모션을 모두 반환한다
+- [x] 거래처 담당자(`role='partner'`) 토큰으로 관리자 API 호출 시 403이 반환된다
+- [x] 프로모션을 `status='draft'`로 저장할 수 있고, 이 건은 `GET /promotions`(거래처용)에 노출되지 않는다 (UC-6)
+- [x] `PATCH .../status`로 `published` 전환 시 즉시 `GET /promotions`에 노출된다 (BR-9)
+- [x] `PATCH .../status`로 `closed` 전환 시 `GET /promotions`에서 제외된다 (BR-10)
+- [x] 쿠폰 이벤트를 부착해 등록하면 `coupon_events` 행이 `capacity=50`, `applied_count=0`으로 생성된다 (BR-6)
+- [x] 동일 프로모션에 쿠폰 이벤트를 2개 부착하려 하면 UNIQUE 제약으로 거부된다 (1:0..1)
+- [x] `GET /admin/promotions`는 임시저장·게시됨·종료됨 프로모션을 모두 반환한다
 
 ---
 
@@ -252,19 +260,19 @@ flowchart LR
 - `PATCH /applications/:id/cancel`: `status`를 `canceled`로 전환 + `canceled_at` 기록. **`applied_count`는 감소시키지 않는다** (BR-6 슬롯 미반환). 프로모션이 종료됐어도 취소는 허용 (BR-11)
 
 **완료 조건**
-- [ ] 일반 프로모션(쿠폰 없음) 참여 신청 시 `applications` 행이 `status='applied'`로 생성된다 (UC-3)
-- [ ] 이미 `status='applied'`인 프로모션에 재신청 시 거부되고 새 행이 생성되지 않는다 (EX-2)
-- [ ] 취소 후 재신청 시 **새 행이 아니라 기존 행의 status가 `canceled`→`applied`로 전환**된다 (BR-3)
-- [ ] 쿠폰 이벤트 프로모션 신청 성공 시 `draw_results` 행이 생성되고 `discount_rate`가 5/10/15/20 중 하나다 (BR-4)
-- [ ] 신청 응답에 당첨 할인율과 만료일(`expires_at` = 확정일+1개월)이 포함된다 (BR-8)
-- [ ] 취소 후 재신청 시 `draw_results`가 **덮어써지고**(같은 `application_id`) 행이 2개로 늘지 않는다 (BR-5)
-- [ ] 신청 성공 시마다 `coupon_events.applied_count`가 1씩 증가한다 (BR-6)
-- [ ] **신청 취소 후에도 `applied_count`가 감소하지 않는다** (BR-6 슬롯 미반환)
-- [ ] `applied_count`가 50에 도달한 뒤의 신청은 신규·재신청 모두 "마감" 응답으로 거부된다 (EX-1, EX-4)
-- [ ] 마감으로 거부된 요청은 `applications`·`draw_results` 어느 쪽에도 흔적을 남기지 않는다(트랜잭션 롤백)
-- [ ] 종료된(`closed`) 프로모션에 신규 신청 시 거부된다 (EX-3, BR-11)
-- [ ] 종료된 프로모션의 기존 신청은 정상적으로 취소된다 (BR-11)
-- [ ] 다른 거래처의 신청건을 취소하려 하면 거부된다(본인 소유 검증)
+- [x] 일반 프로모션(쿠폰 없음) 참여 신청 시 `applications` 행이 `status='applied'`로 생성된다 (UC-3)
+- [x] 이미 `status='applied'`인 프로모션에 재신청 시 거부되고 새 행이 생성되지 않는다 (EX-2)
+- [x] 취소 후 재신청 시 **새 행이 아니라 기존 행의 status가 `canceled`→`applied`로 전환**된다 (BR-3)
+- [x] 쿠폰 이벤트 프로모션 신청 성공 시 `draw_results` 행이 생성되고 `discount_rate`가 5/10/15/20 중 하나다 (BR-4)
+- [x] 신청 응답에 당첨 할인율과 만료일(`expires_at` = 확정일+1개월)이 포함된다 (BR-8)
+- [x] 취소 후 재신청 시 `draw_results`가 **덮어써지고**(같은 `application_id`) 행이 2개로 늘지 않는다 (BR-5)
+- [x] 신청 성공 시마다 `coupon_events.applied_count`가 1씩 증가한다 (BR-6)
+- [x] **신청 취소 후에도 `applied_count`가 감소하지 않는다** (BR-6 슬롯 미반환)
+- [x] `applied_count`가 50에 도달한 뒤의 신청은 신규·재신청 모두 "마감" 응답으로 거부된다 (EX-1, EX-4)
+- [x] 마감으로 거부된 요청은 `applications`·`draw_results` 어느 쪽에도 흔적을 남기지 않는다(트랜잭션 롤백)
+- [x] 종료된(`closed`) 프로모션에 신규 신청 시 거부된다 (EX-3, BR-11)
+- [x] 종료된 프로모션의 기존 신청은 정상적으로 취소된다 (BR-11)
+- [x] 다른 거래처의 신청건을 취소하려 하면 거부된다(본인 소유 검증)
 
 ---
 
@@ -282,11 +290,11 @@ flowchart LR
   - 있으면 `DrawResult`(discount_rate, expires_at) 조인 (BR-8)
 
 **완료 조건**
-- [ ] 로그인한 거래처의 신청 건만 반환되고 타 거래처 건은 포함되지 않는다
-- [ ] `status='applied'`와 `status='canceled'` 건이 모두 반환되며 상태가 구분된다
-- [ ] 프로모션이 종료(`closed`)된 신청 건도 목록에 계속 포함된다 (BR-10)
-- [ ] 쿠폰 이벤트 당첨 건에 `discount_rate`와 `expires_at`이 함께 반환된다 (BR-8)
-- [ ] 응답에 프로모션 `status`가 포함되어 프론트가 "종료된 프로모션" 태그를 표시할 수 있다
+- [x] 로그인한 거래처의 신청 건만 반환되고 타 거래처 건은 포함되지 않는다
+- [x] `status='applied'`와 `status='canceled'` 건이 모두 반환되며 상태가 구분된다
+- [x] 프로모션이 종료(`closed`)된 신청 건도 목록에 계속 포함된다 (BR-10)
+- [x] 쿠폰 이벤트 당첨 건에 `discount_rate`와 `expires_at`이 함께 반환된다 (BR-8)
+- [x] 응답에 프로모션 `status`가 포함되어 프론트가 "종료된 프로모션" 태그를 표시할 수 있다
 
 ---
 
@@ -305,11 +313,11 @@ flowchart LR
   - 신청 거래처 목록(거래처명, 상태, 신청일시, 당첨 할인율)
 
 **완료 조건**
-- [ ] 거래처 담당자 토큰으로 호출 시 403이 반환된다
-- [ ] 신청됨·취소됨 건수가 실제 `applications` 데이터와 일치한다
-- [ ] 쿠폰 이벤트 프로모션에서 `applied_count`/`capacity`가 반환된다
-- [ ] 할인율별 당첨 분포 합계가 `draw_results` 총 건수와 일치한다
-- [ ] 신청 거래처 목록에 거래처명·상태·신청일시가 포함된다
+- [x] 거래처 담당자 토큰으로 호출 시 403이 반환된다
+- [x] 신청됨·취소됨 건수가 실제 `applications` 데이터와 일치한다
+- [x] 쿠폰 이벤트 프로모션에서 `applied_count`/`capacity`가 반환된다
+- [x] 할인율별 당첨 분포 합계가 `draw_results` 총 건수와 일치한다
+- [x] 신청 거래처 목록에 거래처명·상태·신청일시가 포함된다
 
 ---
 
@@ -325,11 +333,11 @@ flowchart LR
 - `GET /users/me`: 내 정보 조회 / `PATCH /users/me`: 이름·전화번호 수정 / `PATCH /users/me/password`: 비밀번호 변경(현재 비밀번호 확인 후 bcrypt 재해시)
 
 **완료 조건**
-- [ ] `GET /users/me`가 로그인 사용자 정보를 반환하고 `password_hash`는 응답에 포함되지 않는다
-- [ ] `PATCH /users/me`로 이름·전화번호가 갱신된다
-- [ ] 현재 비밀번호가 틀리면 비밀번호 변경이 거부된다
-- [ ] 비밀번호 변경 후 새 비밀번호로 로그인이 성공한다
-- [ ] (축소 시) 최소한 `GET /users/me` 읽기 전용 조회만이라도 동작한다
+- [x] `GET /users/me`가 로그인 사용자 정보를 반환하고 `password_hash`는 응답에 포함되지 않는다
+- [x] `PATCH /users/me`로 이름·전화번호가 갱신된다
+- [x] 현재 비밀번호가 틀리면 비밀번호 변경이 거부된다
+- [x] 비밀번호 변경 후 새 비밀번호로 로그인이 성공한다
+- [x] (축소 시) 최소한 `GET /users/me` 읽기 전용 조회만이라도 동작한다
 
 ---
 
