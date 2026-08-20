@@ -28,7 +28,7 @@
   color: var(--color-danger);
 }
 
-.auth-field input {
+.auth-field input:not([type='radio']):not([type='checkbox']) {
   width: 100%;
   box-sizing: border-box;
   padding: var(--space-3);
@@ -39,6 +39,12 @@
 
 .auth-error {
   color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-4);
+}
+
+.auth-success {
+  color: var(--color-success);
   font-size: var(--font-size-xs);
   margin-bottom: var(--space-4);
 }

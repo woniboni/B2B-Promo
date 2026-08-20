@@ -46,14 +46,17 @@ export default function AdminPromotionListPage() {
           >
             종료
           </button>
+          <Link to={`/admin/promotions/${promotion.id}/applications`} className="btn-link">
+            현황
+          </Link>
         </>
       );
     }
-    // closed: 현황 조회는 FE-7에서 이어받는다 (onClick 미구현)
+    // closed
     return (
-      <button type="button" className="btn-link">
+      <Link to={`/admin/promotions/${promotion.id}/applications`} className="btn-link">
         현황
-      </button>
+      </Link>
     );
   }
 
@@ -61,9 +64,9 @@ export default function AdminPromotionListPage() {
     <div className="page">
       <header className="page-header">
         <h1>관리자 프로모션 관리</h1>
+        <Link to="/mypage">마이페이지</Link>
         <button
           type="button"
-          className="btn-secondary"
           onClick={() => {
             logout();
             navigate('/login');

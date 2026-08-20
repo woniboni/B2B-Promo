@@ -7,10 +7,12 @@ import {
   createPromotion,
   updatePromotion,
   updatePromotionStatus,
+  fetchApplicationsSummary,
   useAdminPromotions,
   useCreatePromotion,
   useUpdatePromotion,
   useUpdatePromotionStatus,
+  useApplicationsSummary,
 } from './adminPromotions';
 import { useAuthStore } from '../store/authStore';
 
@@ -137,6 +139,40 @@ test('useUpdatePromotion({id,payload}) sends PUT and invalidates ["admin","promo
 // 모두 무효화 대상에 포함하는지 검증한다. 실제로 파트너 목록 화면(PromotionListPage)에
 // 즉시 반영되는지는 크로스 페이지 검증이라 이 파일 범위를 벗어나며, 별도로 Chrome DevTools
 // 실측으로 확인할 예정이다(보고에 명시).
+// FE-7: GET /admin/promotions/:id/applications
+test('fetchApplicationsSummary(id) requests GET /admin/promotions/:id/applications', async () => {
+  fetch.mockResolvedValueOnce(jsonResponse({ promotion_id: 5 }));
+
+  await fetchApplicationsSummary(5);
+
+  expect(fetch).toHaveBeenCalledTimes(1);
+  const [url, options] = fetch.mock.calls[0];
+  expect(url).toContain('/admin/promotions/5/applications');
+  expect(options?.method ?? 'GET').toBe('GET');
+});
+
+test('useApplicationsSummary fetches with queryKey ["admin","promotions",id,"applications"]', async () => {
+  const summary = { promotion_id: 5, applied_status_count: 2, canceled_count: 1 };
+  fetch.mockResolvedValueOnce(jsonResponse(summary));
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+  const { result } = renderHook(() => useApplicationsSummary(5), { wrapper: makeWrapper(queryClient) });
+
+  await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+  expect(result.current.data).toEqual(summary);
+  expect(queryClient.getQueryData(['admin', 'promotions', 5, 'applications'])).toEqual(summary);
+});
+
+test('useApplicationsSummary is disabled without an id', () => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+  const { result } = renderHook(() => useApplicationsSummary(undefined), { wrapper: makeWrapper(queryClient) });
+
+  expect(result.current.fetchStatus).toBe('idle');
+  expect(fetch).not.toHaveBeenCalled();
+});
+
 test.each(['published', 'closed'])(
   'useUpdatePromotionStatus({id,status:"%s"}) sends PATCH and invalidates ["admin","promotions"] and ["promotions"]',
   async (status) => {

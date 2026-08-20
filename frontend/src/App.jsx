@@ -6,8 +6,10 @@ import SignupPage from './pages/SignupPage';
 import PromotionListPage from './pages/PromotionListPage';
 import PromotionDetailPage from './pages/PromotionDetailPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
+import MyPage from './pages/MyPage';
 import AdminPromotionListPage from './pages/admin/AdminPromotionListPage';
 import AdminPromotionFormPage from './pages/admin/AdminPromotionFormPage';
+import AdminPromotionStatusPage from './pages/admin/AdminPromotionStatusPage';
 
 const queryClient = new QueryClient();
 
@@ -71,6 +73,22 @@ export default function App() {
             element={
               <ProtectedRoute role="admin">
                 <AdminPromotionFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/promotions/:id/applications"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminPromotionStatusPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mypage"
+            element={
+              <ProtectedRoute>
+                <MyPage />
               </ProtectedRoute>
             }
           />

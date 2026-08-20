@@ -13,6 +13,7 @@ export default function PromotionListPage() {
       <header className="page-header">
         <h1>B2B-Promo</h1>
         <Link to="/applications/me">내 신청 목록</Link>
+        <Link to="/mypage">마이페이지</Link>
         <button
           onClick={() => {
             logout();

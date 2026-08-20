@@ -22,6 +22,9 @@
 | v1.16 | 2026-08-20 | FE-4 수행 완료: `src/api/applications.js`(신규, `applyToPromotion`+`useApplyPromotion` — 성공 시 `['promotions']`/`['promotions', id]` 쿼리 무효화). `PromotionDetailPage.jsx`에 상태별 렌더링 우선순위(종료됨→이미신청함→마감→활성) 및 신청 버튼 `onClick` 연결, 추첨 결과 모달(당첨 할인율/만료일/"재추첨 미제공" 안내, 확인 버튼만 존재) 인라인 구현. "이미 신청함"(EX-2) 판정은 `GET /applications/me`를 별도로 조회하지 않고 POST 실패 시 409 "이미 신청한 프로모션입니다." 응답을 반응적으로 감지하는 방식으로 구현(9-plan.md가 `useMyApplications`를 FE-5 몫으로 명시했고, 와이어프레임 비고도 "중복 신청 시도" 시점 감지를 전제하므로 새 쿼리 훅 추가는 오버엔지니어링으로 판단해 기각). **테스트 작성 중 발견한 버그**: 신청 성공 시 트리거되는 쿼리 무효화가 `['promotions', id]`의 백그라운드 재조회를 유발하는데, 이 재조회가 실패하면(테스트에서 mock 큐 소진) React Query가 `isError`로 전환되어 방금 띄운 모달/완료 안내를 "프로모션을 찾을 수 없습니다"로 덮어써버리는 현상을 발견 → 테스트의 mock 체인을 `mockResolvedValue`(지속형 폴백)로 교정해 재현/해결(실제 앱 코드 버그 아님, 테스트의 mock 설계 문제였음). 재추첨 버튼 부재를 확인하는 테스트 자체가 모달의 필수 고지문("※ 재추첨은 제공되지 않습니다.")과 텍스트가 겹쳐 오탐하던 것도 버튼 role 기준으로 좁혀 수정. 할인율 표시가 백엔드 NUMERIC 컬럼 특성상 "10.00%"처럼 소수점이 남는 것을 실측 중 발견해 `Math.round(Number(...))`로 프론트에서 정리(BE-5 응답 자체는 변경하지 않음, 표시 계층에서만 보정). 전체 43개 테스트 통과, 커버리지 95.45%(문)/97.54%(라인). Chrome DevTools MCP로 admin API를 통해 임시 프로모션 2건(쿠폰/일반)을 만들어 실행 중인 dev 서버+백엔드에 대해 실제 신청→추첨 모달(375px 확인)→중복 신청 거부→일반 신청 완료 안내까지 전 흐름을 검증 후 임시 데이터 정리. 8개 완료 조건을 실측 검증 후 체크박스 반영 |
 | v1.17 | 2026-08-20 | FE-5 수행 완료: `src/api/applications.js`에 `useMyApplications`(`GET /applications/me`)/`useCancelApplication`(`PATCH /applications/:id/cancel`, 성공 시 `['applications','me']`만 무효화 — 취소는 BR-6에 따라 `applied_count`를 되돌리지 않으므로 `['promotions']` 무효화 불필요) 추가, `useApplyPromotion`의 `onSuccess`에도 `['applications','me']` 무효화를 추가해 재신청이 이 화면에도 반영되도록 함. `src/pages/MyApplicationsPage.jsx` 신규(카드별 유형/제목/상태 배지/종료 태그/당첨 정보, 신청됨→취소하기, 취소됨+비종료→재신청하기, 취소/재신청 응답 바디는 화면에 직접 반영하지 않고 재조회로만 갱신 — 백엔드 `cancel`이 promotion/draw_result 중첩 없는 raw row만 반환함을 확인 후 결정). `PromotionListPage.jsx` 헤더에 "내 신청 목록" 링크 추가. `App.jsx`에 `/applications/me` 라우트 추가. 계획 수립 단계에서 서브에이전트가 "FE-1~4에 테스트 파일이 없다"는 사실과 다른 전제로 수동 QA만 권고했으나 실제로는 10개 테스트 파일이 이미 존재해 이 부분은 기각하고 기존 관행대로 자동화 테스트를 작성. 테스트 6개 케이스 신규(`MyApplicationsPage.test.jsx`) + `PromotionListPage.test.jsx`에 네비게이션 링크 확인 1건 추가, 전체 50개 테스트 통과, `MyApplicationsPage.jsx` 커버리지 100%(문/라인/함수). Chrome DevTools MCP로 쿠폰/종료예정 프로모션 2건을 만들어 실제 신청→취소→재신청(같은 카드 재사용, BR-3)→종료된 프로모션 건의 취소(재신청 버튼 미노출 확인, BR-11/EX-3)까지 라이브 서버에서 전 흐름 검증(375px) 후 임시 데이터 정리. 8개 완료 조건을 실측 검증 후 체크박스 반영 |
 | v1.18 | 2026-08-20 | FE-6 수행 완료: `App.jsx`의 `ProtectedRoute`에 `role` prop 추가(role 불일치 시 파트너 홈 `/`로 리다이렉트 — 이미 로그인된 사용자이므로 `/login`이 아닌 `/`가 적절하다고 판단), `/admin`·신규 `/admin/promotions/new`·`/admin/promotions/:id/edit` 3개 라우트 모두 `role="admin"`으로 보호. `src/api/adminPromotions.js`(신규, `promotions.js`/`applications.js`와 분리 — 관리자 전용 엔드포인트 4개+훅 4개로 파일이 커져 엔티티 네이밍 원칙상 분리가 적절) `fetchAdminPromotions`/`createPromotion`/`updatePromotion`/`updatePromotionStatus`+훅, 게시/종료/등록은 `['admin','promotions']`와 `['promotions']` 둘 다 무효화(BR-9/BR-10 즉시 반영). `src/pages/admin/AdminPromotionListPage.jsx`(교체, 데스크탑 테이블+모바일 카드 병행 렌더링을 CSS 미디어쿼리로 전환), `src/pages/admin/AdminPromotionFormPage.jsx`(신규, 등록/수정 겸용 — 수정 모드는 상태 전환 버튼 없이 "저장"만 두어 폼과 상태 전환 책임 분리, 쿠폰이벤트는 등록 시에만 체크 가능하고 정원 입력 필드 자체가 없어 BR-6 자연히 보장, 수정 모드 프리필은 기존 `usePromotionDetail(id)` 재사용). "신청 현황" 열/버튼은 FE-3→FE-4 선례처럼 `onClick` 없이 UI만 두어 FE-7이 이어받도록 함. 테스트 4개 파일 신규/확장(31개 케이스), 전체 76개 테스트 통과, 커버리지 94.8%(문)/96.72%(라인). Chrome DevTools MCP로 관리자·파트너 계정을 별도 브라우저 컨텍스트로 동시에 띄워 등록→게시(파트너 목록에 즉시 노출 확인)→종료(파트너 목록에서 즉시 제거 확인)→수정 저장→파트너의 `/admin` 직접 접근 차단까지 크로스 페이지 시나리오를 라이브 서버에서 실측(375px 카드 레이아웃 포함) 후 임시 데이터 정리. 7개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.19 | 2026-08-20 | FE-7 수행 완료: `src/api/adminPromotions.js`에 `fetchApplicationsSummary`/`useApplicationsSummary` 추가(`GET /admin/promotions/:id/applications`). `src/pages/admin/AdminPromotionStatusPage.jsx`(신규) — 신청됨/취소됨 건수(합계 포함), 쿠폰 이벤트가 있을 때만 `applied_count/capacity`와 할인율(5/10/15/20%)별 분포 섹션 표시(쿠폰 이벤트 없는 프로모션은 할인율 개념이 없으므로 두 섹션 자체를 숨김), 신청 거래처 목록은 API 스키마(`AdminApplicationsSummary.applications`)에 있는 거래처명·상태·신청일시·당첨 할인율 4개 필드만 표시(와이어프레임의 "유효기한" 열은 API가 값을 내려주지 않아 제외, 완료조건에도 없음). 프로모션 제목/유형/상태 헤더는 이 요약 API가 반환하지 않아 기존 `usePromotionDetail(id)`를 재사용해 조합(관리자는 draft/closed 조회 제한이 없어 FE-6의 수정화면과 동일하게 재사용 가능). 목록/카드 반응형은 `AdminPromotionListPage`의 `.admin-table`/`.admin-card-list` 패턴 그대로 재사용(신규 CSS 없음). `AdminPromotionListPage.jsx`의 "현황" 액션을 실제 `Link`로 연결하고 게시됨 행에도 노출(기존에는 종료됨 행에만 자리만 있었음), 기존 `AdminPromotionListPage.test.jsx`의 "현황 버튼" 단언을 "현황 링크"로 갱신. 테스트 2개 파일 신규/확장(adminPromotions.test.js 3케이스, AdminPromotionStatusPage.test.jsx 9케이스) + AdminPromotionListPage.test.jsx 갱신, 전체 89개 테스트 통과, 전체 커버리지 95.1%(문)/96.92%(라인), 신규 페이지 자체는 100%(문/라인/함수). Chrome DevTools MCP로 쿠폰 이벤트 프로모션 1건에 파트너 2곳을 신청시키고 1건은 취소해(신청됨 1/취소됨 1, 할인율 10%/15% 분포) 실행 중인 dev 서버(5175)+백엔드(3000)에서 관리자 목록의 "현황" 링크 클릭 → 실제 수치 일치 확인(375px 카드 레이아웃 포함) 후 임시 데이터 정리. 5개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.20 | 2026-08-20 | FE-8 수행 완료: `src/api/users.js`(신규) `fetchMe`/`updateMe`/`changePassword` + `useMe`/`useUpdateMe`/`useChangePassword` 훅(`useUpdateMe` 성공 시 `['users','me']` 무효화). `src/pages/MyPage.jsx`(신규) — 이메일(읽기전용)·이름·전화번호 폼(`정보 저장`)과 별도 비밀번호 변경 폼(`변경하기`), 뒤로가기 링크는 `authStore.user.role`에 따라 `/`(파트너) 또는 `/admin`(관리자)으로 분기. **계획 수립 중 발견한 API-완료조건 불일치**: 완료조건이 요구하는 "거래처명" 표시가 `GET /users/me`(`User` 스키마)와 로그인 응답 어디에도 내려오지 않음(`Partner.name`은 회원가입 응답에 1회성으로만 존재, 저장되지 않음) — 사용자에게 확인한 결과 백엔드(BE-8, 이미 완료 처리됨) 확장 대신 프론트에서 거래처명 표시를 생략하기로 결정(관리자는 원래 거래처가 없어 자연스러움). `App.jsx`에 `/mypage` 라우트 추가(role 제한 없음 — 파트너·관리자 공통 접근, UC-9). `PromotionListPage.jsx`/`AdminPromotionListPage.jsx` 헤더에 "마이페이지" 링크 추가. `src/pages/auth.css`에 `.auth-success` 스타일 추가(기존 `.auth-error`와 대칭). 테스트 2개 파일 신규(users.test.js 8케이스, MyPage.test.jsx 8케이스) + PromotionListPage.test.jsx/AdminPromotionListPage.test.jsx에 네비게이션 링크 확인 각 1건 추가, 전체 105개 테스트 통과, 전체 커버리지 95.86%(문)/97.42%(라인), `MyPage.jsx` 자체는 100%(문/라인/함수). Chrome DevTools MCP로 임시 파트너 계정 1건을 만들어 실행 중인 dev 서버(5175)+백엔드(3000)에서 이름·전화번호 수정 저장 후 새로고침으로 서버 반영 확인 → 비밀번호 변경 → 로그아웃 후 새 비밀번호로 재로그인 성공 확인 → 관리자 계정으로도 `/mypage` 접근 및 `/admin` 뒤로가기 확인(375px 가로 스크롤 없음 포함) 후 임시 데이터 정리. 4개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.21 | 2026-08-20 | FE-9 수행 완료(9개 화면 전 화면 반응형 점검, 신규 기능 없음): **점검 방법론 교정** — 기존 세션들이 "375px 확인"에 써온 `resize_page`는 실제 OS 창 크기를 바꾸는 도구라 최소 폭 제약(~500px) 밑으로 내려가지 않아 375px를 실제로 재현하지 못했음을 발견 → 이번 점검부터 CDP 뷰포트 에뮬레이션 도구(`emulate` viewport)로 전환해 `window.innerWidth===375`를 스크립트로 직접 확인한 뒤 점검(과거 태스크들의 "375px 실측" 기록은 실제로는 더 넓은 폭에서 확인된 것일 수 있음, 재작업하지 않고 이번 기록부터 정정). 파트너 화면 6종(로그인/회원가입/목록/상세/내 신청목록/마이페이지) + 관리자 화면 3종(목록/등록·수정폼/참여현황)을 파트너·관리자 임시 계정과 프로모션 2건(일반+쿠폰, 긴 제목 포함)으로 375px·1280px 양쪽에서 `scrollWidth===clientWidth` 스크립트 검증과 스크린샷으로 순회. **점검 중 발견해 수정한 버그 2건**: (1) `promotions.css`의 `.page-header`(모든 화면 공통 헤더)에 `flex-wrap`이 없어 FE-5/FE-7/FE-8에서 네비게이션 링크가 누적되면서 375px에서 "마이페이지" 같은 링크 텍스트가 단어 중간에서 줄바꿈되는 문제 발견 → `flex-wrap: wrap` + `gap` 추가로 필요 시 다음 줄로 자연스럽게 내려가도록 수정. (2) `auth.css`의 `.auth-field input { width:100% }` 규칙이 선택자 범위가 넓어 `AdminPromotionFormPage`의 유형 라디오 버튼·쿠폰이벤트 체크박스까지 늘려버려 375px에서 라디오 버튼이 깨져 보이는 문제 발견 → `input:not([type='radio']):not([type='checkbox'])`로 선택자를 좁혀 텍스트 입력에만 적용되도록 수정(부수적으로 `AdminPromotionListPage`의 로그아웃 버튼이 `.btn-secondary`(모바일 폼 전용, width:100%) 재사용으로 데스크탑에서 행 전체를 채우는 거대한 버튼이 되어 있던 것도 함께 발견해 클래스 제거, `PromotionListPage`와 동일한 기본 버튼으로 통일). 관리자 테이블→카드 축소는 `getComputedStyle` 스크립트로 375px에서 `.admin-table{display:none}`/`.admin-card-list{display:flex}`, 1280px에서 반대임을 재확인. 관리자 전용 레이아웃 프레임워크 도입 없음(CSS 미디어 쿼리만 사용) 확인. `AdminPromotionListPage.test.jsx`에 로그아웃 버튼이 `btn-secondary` 클래스를 갖지 않는지 + 클릭 시 토큰이 지워지는지 검증하는 회귀 테스트 1건 추가(기존에 이 페이지엔 로그아웃 동작 테스트 자체가 없었음), 전체 106개 테스트 통과, 커버리지 96.55%(문)/98.16%(라인). `npm run build` 정상. 4개 완료 조건을 실측 검증 후 체크박스 반영 |
 
 > 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1), `docs/5-project-principle.md`(v1.1), `docs/6-arch-diagram.md`(v1.1), `docs/7-wireframe.md`(v1.2), `docs/8-erd.md`(v1.1), `docs/8-schema.sql`(v1.1)을 기반으로 작성되었다. UC/BR/EX 번호는 도메인 정의서와 동일하게 참조하며, 파일 경로는 `5-project-principle.md` 6~7절 디렉토리 구조를 그대로 따른다.
 
@@ -513,11 +516,11 @@ flowchart LR
 - `src/pages/admin/AdminPromotionStatusPage.jsx`: 신청됨/취소됨 건수, 정원 대비 누적 신청 수(`applied_count`/50), 할인율별 당첨 분포, 신청 거래처 목록
 
 **완료 조건**
-- [ ] 신청됨/취소됨 건수가 화면에 구분되어 표시된다
-- [ ] 쿠폰 이벤트 프로모션에서 `applied_count / capacity`(예: 27/50)가 표시된다
-- [ ] 할인율(5/10/15/20%)별 당첨 건수 분포가 표시된다
-- [ ] 신청 거래처 목록(거래처명·상태·신청일시·당첨 할인율)이 표시된다
-- [ ] (축소 시) 최소한 신청자 수 카운트만이라도 표시된다
+- [x] 신청됨/취소됨 건수가 화면에 구분되어 표시된다
+- [x] 쿠폰 이벤트 프로모션에서 `applied_count / capacity`(예: 27/50)가 표시된다
+- [x] 할인율(5/10/15/20%)별 당첨 건수 분포가 표시된다
+- [x] 신청 거래처 목록(거래처명·상태·신청일시·당첨 할인율)이 표시된다
+- [x] (축소 시) 최소한 신청자 수 카운트만이라도 표시된다
 
 ---
 
@@ -532,10 +535,10 @@ flowchart LR
 - `src/api/users.js` + `src/pages/MyPage.jsx`: 내 정보 조회/수정, 비밀번호 변경. 거래처 담당자·관리자 공통 사용
 
 **완료 조건**
-- [ ] 내 정보(이메일·이름·전화번호·거래처명)가 조회된다
-- [ ] 이름·전화번호 수정이 저장되고 화면에 반영된다
-- [ ] 비밀번호 변경 후 새 비밀번호로 재로그인이 성공한다
-- [ ] 거래처 담당자와 관리자 모두 이 화면에 접근할 수 있다
+- [x] 내 정보(이메일·이름·전화번호·거래처명)가 조회된다 (거래처명 제외 — 아래 비고 참조)
+- [x] 이름·전화번호 수정이 저장되고 화면에 반영된다
+- [x] 비밀번호 변경 후 새 비밀번호로 재로그인이 성공한다
+- [x] 거래처 담당자와 관리자 모두 이 화면에 접근할 수 있다
 
 ---
 
@@ -552,10 +555,10 @@ flowchart LR
 - CSS 미디어 쿼리로만 대응(관리자 전용 레이아웃 프레임워크 도입 금지)
 
 **완료 조건**
-- [ ] 9개 화면 전부 모바일(375px)에서 가로 스크롤 없이 표시된다
-- [ ] 9개 화면 전부 데스크탑(1280px)에서 레이아웃이 깨지지 않는다
-- [ ] 관리자 테이블이 모바일에서 카드형으로 축소되어 읽을 수 있다
-- [ ] 별도 관리자 전용 레이아웃 프레임워크를 도입하지 않았다
+- [x] 9개 화면 전부 모바일(375px)에서 가로 스크롤 없이 표시된다
+- [x] 9개 화면 전부 데스크탑(1280px)에서 레이아웃이 깨지지 않는다
+- [x] 관리자 테이블이 모바일에서 카드형으로 축소되어 읽을 수 있다
+- [x] 별도 관리자 전용 레이아웃 프레임워크를 도입하지 않았다
 
 ---
 

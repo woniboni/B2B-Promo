@@ -13,6 +13,9 @@ export function updatePromotion(id, payload) {
 export function updatePromotionStatus(id, status) {
   return apiFetch(`/admin/promotions/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
 }
+export function fetchApplicationsSummary(id) {
+  return apiFetch(`/admin/promotions/${id}/applications`);
+}
 
 export function useAdminPromotions() {
   return useQuery({ queryKey: ['admin', 'promotions'], queryFn: fetchAdminPromotions });
@@ -48,5 +51,13 @@ export function useUpdatePromotionStatus() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'promotions'] });
       queryClient.invalidateQueries({ queryKey: ['promotions'] });
     },
+  });
+}
+
+export function useApplicationsSummary(id) {
+  return useQuery({
+    queryKey: ['admin', 'promotions', id, 'applications'],
+    queryFn: () => fetchApplicationsSummary(id),
+    enabled: !!id,
   });
 }

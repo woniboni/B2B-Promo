@@ -217,8 +217,8 @@ test('draft and published rows have a "수정" edit link; closed rows do not', a
   });
 });
 
-// closed 건에는 게시/종료 버튼이 없고 "현황" 버튼만 있다 (FE-7 몫이라 onClick 없음)
-test('closed rows have no 게시/종료 buttons, only a 현황 button', async () => {
+// closed 건에는 게시/종료 버튼이 없고 "현황" 링크만 있다 (FE-7: 참여 현황 화면으로 이동)
+test('closed rows have no 게시/종료 buttons, only a 현황 link to the status page', async () => {
   fetch.mockResolvedValueOnce(jsonResponse(allPromotions));
 
   renderPage();
@@ -228,6 +228,54 @@ test('closed rows have no 게시/종료 buttons, only a 현황 button', async ()
   closedRows.forEach((row) => {
     expect(within(row).queryByRole('button', { name: '게시' })).not.toBeInTheDocument();
     expect(within(row).queryByRole('button', { name: '종료' })).not.toBeInTheDocument();
-    expect(within(row).getByRole('button', { name: '현황' })).toBeInTheDocument();
+    expect(within(row).getByRole('link', { name: '현황' })).toHaveAttribute(
+      'href',
+      '/admin/promotions/3/applications'
+    );
+  });
+});
+
+// FE-9: 로그아웃 버튼이 헤더 폭을 100%로 채우지 않는다(반응형 점검 중 발견한 버그 —
+// auth.css의 .btn-secondary는 모바일 폼 하단 전용 스타일인데 이 헤더 버튼에 재사용되어
+// 데스크탑에서 행 전체를 채우는 거대한 버튼으로 깨졌었다). 로그아웃 동작 자체도 함께 검증한다.
+test('logout button is not full-width and clears tokens on click', async () => {
+  fetch.mockResolvedValueOnce(jsonResponse(allPromotions));
+
+  renderPage();
+  await waitForTitle('임시저장 프로모션');
+
+  const logoutButton = screen.getByRole('button', { name: '로그아웃' });
+  expect(logoutButton.className).not.toContain('btn-secondary');
+
+  fireEvent.click(logoutButton);
+
+  expect(useAuthStore.getState().accessToken).toBeNull();
+  expect(useAuthStore.getState().refreshToken).toBeNull();
+});
+
+// FE-8: 헤더에 "마이페이지" 링크가 추가된다
+test('header shows a "마이페이지" link to /mypage', async () => {
+  fetch.mockResolvedValueOnce(jsonResponse(allPromotions));
+
+  renderPage();
+  await waitForTitle('임시저장 프로모션');
+
+  const link = screen.getByRole('link', { name: '마이페이지' });
+  expect(link).toHaveAttribute('href', '/mypage');
+});
+
+// FE-7: published 건에도 현황 링크가 노출되어 게시 중인 프로모션의 참여 현황을 확인할 수 있다
+test('published rows also have a 현황 link to the status page', async () => {
+  fetch.mockResolvedValueOnce(jsonResponse(allPromotions));
+
+  renderPage();
+  await waitForTitle('게시된 쿠폰이벤트 프로모션');
+
+  const publishedRows = getRowsByTitle('게시된 쿠폰이벤트 프로모션');
+  publishedRows.forEach((row) => {
+    expect(within(row).getByRole('link', { name: '현황' })).toHaveAttribute(
+      'href',
+      '/admin/promotions/2/applications'
+    );
   });
 });

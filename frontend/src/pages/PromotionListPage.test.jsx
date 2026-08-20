@@ -114,6 +114,16 @@ test('header shows a "내 신청 목록" link to /applications/me', async () => 
   expect(link).toHaveAttribute('href', '/applications/me');
 });
 
+// FE-8: 헤더에 "마이페이지" 링크가 추가된다
+test('header shows a "마이페이지" link to /mypage', async () => {
+  fetch.mockResolvedValueOnce(jsonResponse([]));
+
+  renderPage();
+
+  const link = await screen.findByRole('link', { name: '마이페이지' });
+  expect(link).toHaveAttribute('href', '/mypage');
+});
+
 // 완료조건 7: 서버 데이터(프로모션 목록)는 TanStack Query 캐시에만 보관되고
 // authStore(Zustand)에는 세션 관련 필드만 남아야 한다.
 test('rendering the promotion list does not add any field to authStore', async () => {
