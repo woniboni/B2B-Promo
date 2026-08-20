@@ -2,11 +2,11 @@
   "openapi": "3.0.3",
   "info": {
     "title": "B2B-Promo API",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "식자재 유통사가 B2B 거래처에게 프로모션을 안내하고 참여 신청(및 선착순 쿠폰 이벤트 즉시 추첨)을 받는 API. docs/1-domain-definition.md(v1.5), docs/3-prd.md(v1.5), docs/9-plan.md 기준으로 작성된 MVP 범위 스펙이다."
   },
   "servers": [
-    { "url": "/api", "description": "백엔드 API 서버 (경로 프리픽스는 배포 환경에 따라 다를 수 있음)" }
+    { "url": "/", "description": "백엔드 API 서버 (실제 라우트에 prefix 없음, backend/src/app.js 마운트 구조와 동일)" }
   ],
   "tags": [
     { "name": "Auth", "description": "회원가입/로그인/토큰 재발급 (UC-1)" },
@@ -197,6 +197,15 @@
             }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": {
+            "description": "거래처 담당자 계정이 아님(예: 관리자 토큰으로 호출) — 참여 신청은 거래처 담당자만 가능",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": { "error": "거래처 담당자만 신청할 수 있습니다." }
+              }
+            }
+          },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": {
             "description": "현재 리소스 상태와의 충돌: 종료된 프로모션에 신규 신청(EX-3), 중복 신청(EX-2), 쿠폰 이벤트 선착순 50명 마감(EX-1, EX-4)",
@@ -430,7 +439,7 @@
       "patch": {
         "tags": ["Users"],
         "summary": "내 정보 수정 (UC-9)",
-        "description": "이름/전화번호를 수정한다.",
+        "description": "이름/전화번호를 수정한다. 두 필드 모두 선택값이며, 생략한 필드는 기존 값을 유지한다(COALESCE). 별도의 형식 검증이 없어 400 응답은 발생하지 않는다.",
         "requestBody": {
           "required": true,
           "content": {
@@ -448,7 +457,6 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }

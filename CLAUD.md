@@ -26,6 +26,6 @@
 | `docs/8-erd.md` | ERD (mermaid erDiagram) | v1.1 |
 | `docs/8-schema.sql` | 실제 PostgreSQL 17 DDL (ERD 기반) | v1.1 |
 | `docs/9-plan.md` | 실행 계획 — DB/BE/FE/QA Task 분해, 선행 Task, 체크박스 완료 조건 | v1.3 |
-| `docs/swagger.json` | OpenAPI 3.0 스펙 | 1.0.1 |
+| `docs/swagger.json` | OpenAPI 3.0 스펙 | 1.0.2 |
 
 문서 간 의존 순서: `1-domain-definition.md`(근간) → `2-usecase.md`/`3-prd.md`/`4-user-scenario.md`/`7-wireframe.md`(요구사항·UX) → `5-project-principle.md`/`6-arch-diagram.md`/`8-erd.md`/`8-schema.sql`/`swagger.json`(기술 설계) → `9-plan.md`(실행 계획, 진행 상황은 체크박스로 추적).
