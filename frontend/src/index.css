@@ -1,0 +1,27 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+  color: var(--color-gray-900);
+  background-color: var(--color-gray-50);
+}
+
+#root {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+/* mobile: 기본(0~767px), 768px 이상은 확장 레이아웃 */
+@media (min-width: 768px) {
+  #root {
+    padding: 0 var(--space-6);
+  }
+}

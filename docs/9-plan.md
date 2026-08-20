@@ -16,6 +16,12 @@
 | v1.10 | 2026-08-20 | BE-6 수행 완료: `src/db/applications.queries.js`에 `findByPartnerId(partnerId)` 추가, `src/controllers/applications.controller.js`에 `myApplications` 추가(새 JOIN 설계 없이 기존 `promotions.queries.findById`/`drawResults.queries.findByApplicationId`를 N+1로 재사용해 `{...application, promotion, draw_result}` 조립 — MVP 데이터 규모상 가장 단순한 선택, 파트너 없는 토큰은 빈 배열 200 응답), `src/routes/applications.routes.js`에 `GET /applications/me`를 기존 라우트별 `auth` 개별 적용 패턴으로 추가(`router.use(auth)` 재도입 안 함). `backend/tests/applications-me.test.js` 신규 작성(파트너 A/B 2계정, 일반/쿠폰당첨/취소/종료후유지 4개 프로모션 시나리오, `test-be6-%` 패턴으로만 정리), 총 72개 테스트 통과. 5개 완료 조건을 실측 검증 후 체크박스 반영 |
 | v1.11 | 2026-08-20 | BE-7 수행 완료: `src/db/applications.queries.js`에 `countByStatus`/`discountDistribution`/`listByPromotion` 3개 집계 쿼리 추가, `src/controllers/promotions.controller.js`에 기존 `requireAdmin` 재사용한 `adminApplicationsSummary` 추가(병렬 쿼리 조회 후 상태별 건수/할인율 분포/신청 거래처 목록 조립), `src/routes/promotions.routes.js`의 기존 `adminRouter`에 `GET /:id/applications` 추가. **구현 검토 중 발견한 버그 수정**: `draw_results.discount_rate`가 `NUMERIC(5,2)` 컬럼이라 `pg`가 기본적으로 문자열("5.00")로 반환하는데, 이를 캐스팅 없이 `discount_distribution`의 정수 키(5/10/15/20)에 그대로 대입하면 매칭되지 않고 별도 문자열 키가 생겨 분포가 전부 0으로 보이는 문제 발견 → 두 쿼리 모두 `discount_rate::int`로 캐스팅해 수정(BE-5 응답에서는 컨트롤러가 `Number()`로 방어하고 있었으나 BE-7 신규 쿼리에는 없었음). `backend/tests/adminApplicationsSummary.test.js` 신규 작성(쿠폰 이벤트 프로모션에 파트너 A/B/C 신청 후 C 취소, 일반 프로모션에 D 신청, `test-be7-%` 패턴으로만 정리), 총 81개 테스트 통과. 5개 완료 조건을 실측 검증 후 체크박스 반영 |
 | v1.12 | 2026-08-20 | BE-8 수행 완료: `src/db/users.queries.js`에 `findById`/`updateProfile`/`updatePassword` 추가, `src/controllers/users.controller.js`(신규) `getMe`(기존 login의 password_hash 제외 destructuring 패턴 재사용)/`updateMe`/`changePassword`(현재 비밀번호 bcrypt.compare 실패 시 400, 8자 미만 신규 비밀번호 400), `src/routes/users.routes.js`(신규, `/users` prefix로 좁게 마운트되어 `router.use(auth)` 전체 적용이 안전 — applications.routes.js처럼 앱 루트에 마운트되는 경우와 다름). `src/app.js`에 `/users` 라우트 연결. `backend/tests/users.test.js` 신규 작성(`test-users-%` 패턴으로만 정리), 총 89개 테스트 통과. **테스트 인프라 수정**: 전체 스위트를 Jest 기본(병렬 워커)으로 실행하면 여러 테스트 파일이 동시에 같은 하나의 실행 중인 개발 서버(v1.7 방침)를 두들겨 `beforeAll` 훅이 5초 타임아웃을 넘겨 실패하는 현상 발견(개별 실행 시엔 통과) → `package.json`의 `test` 스크립트를 `jest --runInBand`로 변경해 테스트 파일을 직렬 실행하도록 수정, 이후 89개 전부 통과 재확인. 4개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.13 | 2026-08-20 | FE-1 수행 완료: `npm create vite@latest frontend -- --template react`로 React 19 스캐폴딩(`zustand`/`@tanstack/react-query`/`react-router-dom` 설치), `5-project-principle.md` 6절 구조로 `src/pages/`, `src/pages/admin/`, `src/components/`, `src/api/`, `src/store/` 생성. `src/store/authStore.js`(Zustand+`persist`, `auth-storage` 키로 localStorage 영속화, 토큰/사용자 정보만 보관). `src/api/client.js`(`apiFetch` — Authorization 헤더 부착, 401 시 `/auth/refresh` 1회 재시도 후 실패하면 logout+`/login` 리다이렉트; refresh token은 회전하지 않음, swagger.json 기준). `src/App.jsx`(`BrowserRouter`+`ProtectedRoute`+`QueryClientProvider`), `src/pages/LoginPage.jsx`/`HomePage.jsx`(FE-2에서 교체될 placeholder). `src/styles/tokens.css`(`10-style.md` 1~4절 토큰). Vitest+React Testing Library 도입(`test:"vitest run"`, 새 의존성은 이 조합으로 한정), 테스트 13개 작성(authStore 4/client.js 6/App·ProtectedRoute 3), 커버리지 검증 중 client.js의 비-401 에러 분기와 실제 HomePage 렌더링이 빠져 89.18%였던 것을 발견해 케이스 2개 보강 후 통계 97.29%(문)/100%(라인)로 확보. `npm run dev`(200 응답)·`npm run build` 정상 확인. 6개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.14 | 2026-08-20 | FE-2 수행 완료: `src/api/auth.js`(신규, `signup`/`login` + `useSignup`/`useLogin` TanStack Query 훅, `useLogin` 성공 시 `authStore.setTokens`+`setUser`), `src/pages/LoginPage.jsx`(실제 폼으로 교체, 실패 시 백엔드 에러 메시지 그대로 노출, 역할별 이동), `src/pages/SignupPage.jsx`(신규, 5개 필수 필드), `src/pages/PromotionListPage.jsx`(`HomePage.jsx`를 최종 파일명으로 이관, 로그아웃 버튼 포함), `src/pages/admin/AdminPromotionListPage.jsx`(신규 placeholder, 로그아웃 포함), `src/pages/auth.css`(`10-style.md` 5.2/5.3 반영). `App.jsx`에 `/signup`, `/admin` 라우트 추가. **구현 중 발견한 버그 수정**: `client.js`의 `apiFetch`가 accessToken 유무와 무관하게 모든 401을 "세션 만료"로 간주해 `/auth/refresh`를 시도했는데, 로그인 자체의 401(자격증명 불일치)까지 이 분기를 타면서 백엔드의 실제 에러 메시지("이메일 또는 비밀번호가 올바르지 않습니다.")가 가려지고 `"인증이 필요합니다."`로 대체되는 문제를 테스트 작성 중 발견 → `res.status===401 && accessToken` 조건으로 수정해 토큰이 애초에 없던 요청은 refresh를 시도하지 않도록 함(로그인 실패 메시지 보존). 테스트 8개 파일 28개 케이스로 확장(auth.js/LoginPage/SignupPage/PromotionListPage/AdminPromotionListPage 등), 커버리지 98.79%(문)/100%(라인). Chrome DevTools MCP로 실행 중인 dev 서버(5175)에서 375px 모바일 뷰포트 실측(가로 스크롤 없음, 로그인·회원가입 화면 모두 확인). 7개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.15 | 2026-08-20 | FE-3 수행 완료: `src/api/promotions.js`(신규, `PROMOTION_TYPE_LABELS` 한글 매핑 + `fetchPromotions`/`fetchPromotionDetail` + `usePromotions`/`usePromotionDetail` TanStack Query 훅), `src/pages/PromotionListPage.jsx`(실제 목록 렌더링으로 교체 — 유형 배지, 쿠폰이벤트 배지+잔여 정원, 카드 클릭 시 상세 이동), `src/pages/PromotionDetailPage.jsx`(신규 — 유형/제목/설명, 쿠폰 이벤트면 진행바+잔여정원, "참여 신청하기" 버튼은 `onClick` 없이 UI만 두어 FE-4가 그대로 이어붙이도록 함), `src/pages/promotions.css`(`10-style.md` 5.4/5.5, 그리드 breakpoint 768px). `App.jsx`에 `/promotions/:id` 라우트 추가. BR-9/BR-10 필터링은 이미 BE-3가 보장하므로 프론트는 API 응답을 그대로 렌더링하는 방식으로 구현(중복 필터링 로직 없음). 테스트 3개 파일 신규/갱신(10케이스) + 기존 `App.test.jsx`의 FE-2 placeholder 문구 검증을 실제 페이지 제목 기준으로 수정, 전체 37개 테스트 통과, 커버리지 96.19%(문)/98.94%(라인). Chrome DevTools MCP로 admin API를 통해 임시 프로모션 2건(쿠폰 이벤트 포함)을 생성해 실행 중인 dev 서버(5175)+백엔드(3000)에 대해 실제 회원가입→로그인→목록→상세 흐름을 검증(375px 1열/1280px 그리드 다열 배치, 잔여 정원·진행바 정상 표시 확인), 이 과정에서 `.env`의 `FRONTEND_ORIGIN` 변경(5175) 후 백엔드 dev 서버가 재시작되지 않아 CORS가 예전 값(5173)으로 응답하는 환경 문제를 발견(사용자가 터미널에서 재시작 후 해결, 코드 변경 아님). 검증 후 임시 프로모션·테스트 계정 정리. 7개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.16 | 2026-08-20 | FE-4 수행 완료: `src/api/applications.js`(신규, `applyToPromotion`+`useApplyPromotion` — 성공 시 `['promotions']`/`['promotions', id]` 쿼리 무효화). `PromotionDetailPage.jsx`에 상태별 렌더링 우선순위(종료됨→이미신청함→마감→활성) 및 신청 버튼 `onClick` 연결, 추첨 결과 모달(당첨 할인율/만료일/"재추첨 미제공" 안내, 확인 버튼만 존재) 인라인 구현. "이미 신청함"(EX-2) 판정은 `GET /applications/me`를 별도로 조회하지 않고 POST 실패 시 409 "이미 신청한 프로모션입니다." 응답을 반응적으로 감지하는 방식으로 구현(9-plan.md가 `useMyApplications`를 FE-5 몫으로 명시했고, 와이어프레임 비고도 "중복 신청 시도" 시점 감지를 전제하므로 새 쿼리 훅 추가는 오버엔지니어링으로 판단해 기각). **테스트 작성 중 발견한 버그**: 신청 성공 시 트리거되는 쿼리 무효화가 `['promotions', id]`의 백그라운드 재조회를 유발하는데, 이 재조회가 실패하면(테스트에서 mock 큐 소진) React Query가 `isError`로 전환되어 방금 띄운 모달/완료 안내를 "프로모션을 찾을 수 없습니다"로 덮어써버리는 현상을 발견 → 테스트의 mock 체인을 `mockResolvedValue`(지속형 폴백)로 교정해 재현/해결(실제 앱 코드 버그 아님, 테스트의 mock 설계 문제였음). 재추첨 버튼 부재를 확인하는 테스트 자체가 모달의 필수 고지문("※ 재추첨은 제공되지 않습니다.")과 텍스트가 겹쳐 오탐하던 것도 버튼 role 기준으로 좁혀 수정. 할인율 표시가 백엔드 NUMERIC 컬럼 특성상 "10.00%"처럼 소수점이 남는 것을 실측 중 발견해 `Math.round(Number(...))`로 프론트에서 정리(BE-5 응답 자체는 변경하지 않음, 표시 계층에서만 보정). 전체 43개 테스트 통과, 커버리지 95.45%(문)/97.54%(라인). Chrome DevTools MCP로 admin API를 통해 임시 프로모션 2건(쿠폰/일반)을 만들어 실행 중인 dev 서버+백엔드에 대해 실제 신청→추첨 모달(375px 확인)→중복 신청 거부→일반 신청 완료 안내까지 전 흐름을 검증 후 임시 데이터 정리. 8개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.17 | 2026-08-20 | FE-5 수행 완료: `src/api/applications.js`에 `useMyApplications`(`GET /applications/me`)/`useCancelApplication`(`PATCH /applications/:id/cancel`, 성공 시 `['applications','me']`만 무효화 — 취소는 BR-6에 따라 `applied_count`를 되돌리지 않으므로 `['promotions']` 무효화 불필요) 추가, `useApplyPromotion`의 `onSuccess`에도 `['applications','me']` 무효화를 추가해 재신청이 이 화면에도 반영되도록 함. `src/pages/MyApplicationsPage.jsx` 신규(카드별 유형/제목/상태 배지/종료 태그/당첨 정보, 신청됨→취소하기, 취소됨+비종료→재신청하기, 취소/재신청 응답 바디는 화면에 직접 반영하지 않고 재조회로만 갱신 — 백엔드 `cancel`이 promotion/draw_result 중첩 없는 raw row만 반환함을 확인 후 결정). `PromotionListPage.jsx` 헤더에 "내 신청 목록" 링크 추가. `App.jsx`에 `/applications/me` 라우트 추가. 계획 수립 단계에서 서브에이전트가 "FE-1~4에 테스트 파일이 없다"는 사실과 다른 전제로 수동 QA만 권고했으나 실제로는 10개 테스트 파일이 이미 존재해 이 부분은 기각하고 기존 관행대로 자동화 테스트를 작성. 테스트 6개 케이스 신규(`MyApplicationsPage.test.jsx`) + `PromotionListPage.test.jsx`에 네비게이션 링크 확인 1건 추가, 전체 50개 테스트 통과, `MyApplicationsPage.jsx` 커버리지 100%(문/라인/함수). Chrome DevTools MCP로 쿠폰/종료예정 프로모션 2건을 만들어 실제 신청→취소→재신청(같은 카드 재사용, BR-3)→종료된 프로모션 건의 취소(재신청 버튼 미노출 확인, BR-11/EX-3)까지 라이브 서버에서 전 흐름 검증(375px) 후 임시 데이터 정리. 8개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.18 | 2026-08-20 | FE-6 수행 완료: `App.jsx`의 `ProtectedRoute`에 `role` prop 추가(role 불일치 시 파트너 홈 `/`로 리다이렉트 — 이미 로그인된 사용자이므로 `/login`이 아닌 `/`가 적절하다고 판단), `/admin`·신규 `/admin/promotions/new`·`/admin/promotions/:id/edit` 3개 라우트 모두 `role="admin"`으로 보호. `src/api/adminPromotions.js`(신규, `promotions.js`/`applications.js`와 분리 — 관리자 전용 엔드포인트 4개+훅 4개로 파일이 커져 엔티티 네이밍 원칙상 분리가 적절) `fetchAdminPromotions`/`createPromotion`/`updatePromotion`/`updatePromotionStatus`+훅, 게시/종료/등록은 `['admin','promotions']`와 `['promotions']` 둘 다 무효화(BR-9/BR-10 즉시 반영). `src/pages/admin/AdminPromotionListPage.jsx`(교체, 데스크탑 테이블+모바일 카드 병행 렌더링을 CSS 미디어쿼리로 전환), `src/pages/admin/AdminPromotionFormPage.jsx`(신규, 등록/수정 겸용 — 수정 모드는 상태 전환 버튼 없이 "저장"만 두어 폼과 상태 전환 책임 분리, 쿠폰이벤트는 등록 시에만 체크 가능하고 정원 입력 필드 자체가 없어 BR-6 자연히 보장, 수정 모드 프리필은 기존 `usePromotionDetail(id)` 재사용). "신청 현황" 열/버튼은 FE-3→FE-4 선례처럼 `onClick` 없이 UI만 두어 FE-7이 이어받도록 함. 테스트 4개 파일 신규/확장(31개 케이스), 전체 76개 테스트 통과, 커버리지 94.8%(문)/96.72%(라인). Chrome DevTools MCP로 관리자·파트너 계정을 별도 브라우저 컨텍스트로 동시에 띄워 등록→게시(파트너 목록에 즉시 노출 확인)→종료(파트너 목록에서 즉시 제거 확인)→수정 저장→파트너의 `/admin` 직접 접근 차단까지 크로스 페이지 시나리오를 라이브 서버에서 실측(375px 카드 레이아웃 포함) 후 임시 데이터 정리. 7개 완료 조건을 실측 검증 후 체크박스 반영 |
 
 > 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1), `docs/5-project-principle.md`(v1.1), `docs/6-arch-diagram.md`(v1.1), `docs/7-wireframe.md`(v1.2), `docs/8-erd.md`(v1.1), `docs/8-schema.sql`(v1.1)을 기반으로 작성되었다. UC/BR/EX 번호는 도메인 정의서와 동일하게 참조하며, 파일 경로는 `5-project-principle.md` 6~7절 디렉토리 구조를 그대로 따른다.
 
@@ -359,12 +365,12 @@ flowchart LR
 - 모바일 우선 반응형 기본 CSS 골격
 
 **완료 조건**
-- [ ] `npm run dev`로 개발 서버가 기동되고 초기 화면이 렌더링된다
-- [ ] TanStack Query Provider와 라우터가 `App.jsx`에 연결되어 있다
-- [ ] `authStore`에 서버 데이터(프로모션/신청 목록 등)를 넣지 않는다 — 로그인 세션 상태만 보관한다
-- [ ] 비로그인 상태로 보호 라우트 URL 직접 접근 시 로그인 페이지로 리다이렉트된다 (EX-5)
-- [ ] 401 응답 시 `client.js`가 자동으로 refresh 후 원 요청을 재시도한다(개별 화면에 재시도 로직 없음)
-- [ ] refresh마저 실패하면 토큰을 비우고 로그인 페이지로 보낸다
+- [x] `npm run dev`로 개발 서버가 기동되고 초기 화면이 렌더링된다
+- [x] TanStack Query Provider와 라우터가 `App.jsx`에 연결되어 있다
+- [x] `authStore`에 서버 데이터(프로모션/신청 목록 등)를 넣지 않는다 — 로그인 세션 상태만 보관한다
+- [x] 비로그인 상태로 보호 라우트 URL 직접 접근 시 로그인 페이지로 리다이렉트된다 (EX-5)
+- [x] 401 응답 시 `client.js`가 자동으로 refresh 후 원 요청을 재시도한다(개별 화면에 재시도 로직 없음)
+- [x] refresh마저 실패하면 토큰을 비우고 로그인 페이지로 보낸다
 
 ---
 
@@ -382,13 +388,13 @@ flowchart LR
 - 로그인 성공 시 토큰을 `authStore`에 저장하고 역할에 따라 이동: 거래처 담당자 → `PromotionListPage`, 관리자 → `AdminPromotionListPage`
 
 **완료 조건**
-- [ ] 회원가입 후 로그인 화면으로 이동하고, 해당 계정으로 로그인이 성공한다
-- [ ] 로그인 성공 시 Access/Refresh Token이 `authStore`(+localStorage)에 저장된다
-- [ ] 로그인 실패 시 "이메일 또는 비밀번호가 올바르지 않습니다" 안내가 화면에 표시된다
-- [ ] 관리자 계정으로 로그인하면 관리자 화면으로, 거래처 담당자는 프로모션 목록으로 이동한다
-- [ ] 로그아웃 시 저장된 두 토큰이 모두 제거되고 로그인 화면으로 이동한다
-- [ ] 새로고침 후에도 로그인 상태가 유지된다(localStorage 영속화)
-- [ ] 모바일 뷰포트(375px)에서 폼이 잘리거나 가로 스크롤이 생기지 않는다
+- [x] 회원가입 후 로그인 화면으로 이동하고, 해당 계정으로 로그인이 성공한다
+- [x] 로그인 성공 시 Access/Refresh Token이 `authStore`(+localStorage)에 저장된다
+- [x] 로그인 실패 시 "이메일 또는 비밀번호가 올바르지 않습니다" 안내가 화면에 표시된다
+- [x] 관리자 계정으로 로그인하면 관리자 화면으로, 거래처 담당자는 프로모션 목록으로 이동한다
+- [x] 로그아웃 시 저장된 두 토큰이 모두 제거되고 로그인 화면으로 이동한다
+- [x] 새로고침 후에도 로그인 상태가 유지된다(localStorage 영속화)
+- [x] 모바일 뷰포트(375px)에서 폼이 잘리거나 가로 스크롤이 생기지 않는다
 
 ---
 
@@ -406,13 +412,13 @@ flowchart LR
 - 반응형: 모바일 세로 1열 카드 → 데스크탑 그리드 확장 (`wireframes/1-3-promotion-list.svg` 기준)
 
 **완료 조건**
-- [ ] 게시된(`published`) 프로모션만 목록에 표시된다 (BR-9)
-- [ ] 임시저장·종료된 프로모션이 목록에 표시되지 않는다 (BR-10)
-- [ ] 쿠폰 이벤트가 붙은 카드에 "쿠폰이벤트" 배지와 잔여 정원(`50 - applied_count`)이 표시된다
-- [ ] 카드 클릭/탭 시 해당 프로모션 상세 화면으로 이동한다
-- [ ] 상세 화면에 프로모션 유형·제목·설명이 모두 표시된다
-- [ ] 모바일에서는 카드가 세로 1열, 데스크탑(≥768px)에서는 그리드로 배치된다
-- [ ] 서버 데이터가 TanStack Query 캐시로만 관리되고 Zustand에 복사되지 않는다
+- [x] 게시된(`published`) 프로모션만 목록에 표시된다 (BR-9)
+- [x] 임시저장·종료된 프로모션이 목록에 표시되지 않는다 (BR-10)
+- [x] 쿠폰 이벤트가 붙은 카드에 "쿠폰이벤트" 배지와 잔여 정원(`50 - applied_count`)이 표시된다
+- [x] 카드 클릭/탭 시 해당 프로모션 상세 화면으로 이동한다
+- [x] 상세 화면에 프로모션 유형·제목·설명이 모두 표시된다
+- [x] 모바일에서는 카드가 세로 1열, 데스크탑(≥768px)에서는 그리드로 배치된다
+- [x] 서버 데이터가 TanStack Query 캐시로만 관리되고 Zustand에 복사되지 않는다
 
 ---
 
@@ -434,14 +440,14 @@ flowchart LR
 - 쿠폰 이벤트 신청 성공 시 **추첨 결과 모달**: 당첨 할인율 + "확정일로부터 1개월 이내 사용 가능"(만료일 명시) (BR-4, BR-8). 재추첨 버튼 없음 (BR-5)
 
 **완료 조건**
-- [ ] 일반 프로모션 신청 성공 시 완료 안내가 표시되고 버튼 상태가 갱신된다
-- [ ] 쿠폰 이벤트 신청 성공 시 추첨 결과 모달에 당첨 할인율과 만료일이 표시된다 (BR-4, BR-8)
-- [ ] 추첨 결과 모달에 재추첨/다시뽑기 버튼이 존재하지 않는다 (BR-5)
-- [ ] 잔여 정원이 0인 프로모션에서 신청 버튼이 비활성화되고 "마감되었습니다"가 안내된다 (EX-1)
-- [ ] 이미 신청한(`applied`) 프로모션에서는 버튼 대신 중복 안내가 표시된다 (EX-2)
-- [ ] 서버가 마감으로 거부(에러 응답)하면 화면에 마감 안내가 표시되고 잘못된 성공 처리가 되지 않는다
-- [ ] 신청 성공 후 프로모션 상세의 잔여 정원 표시가 최신 값으로 갱신된다(쿼리 무효화)
-- [ ] 모바일 뷰포트에서 모달이 화면을 벗어나지 않는다
+- [x] 일반 프로모션 신청 성공 시 완료 안내가 표시되고 버튼 상태가 갱신된다
+- [x] 쿠폰 이벤트 신청 성공 시 추첨 결과 모달에 당첨 할인율과 만료일이 표시된다 (BR-4, BR-8)
+- [x] 추첨 결과 모달에 재추첨/다시뽑기 버튼이 존재하지 않는다 (BR-5)
+- [x] 잔여 정원이 0인 프로모션에서 신청 버튼이 비활성화되고 "마감되었습니다"가 안내된다 (EX-1)
+- [x] 이미 신청한(`applied`) 프로모션에서는 버튼 대신 중복 안내가 표시된다 (EX-2)
+- [x] 서버가 마감으로 거부(에러 응답)하면 화면에 마감 안내가 표시되고 잘못된 성공 처리가 되지 않는다
+- [x] 신청 성공 후 프로모션 상세의 잔여 정원 표시가 최신 값으로 갱신된다(쿼리 무효화)
+- [x] 모바일 뷰포트에서 모달이 화면을 벗어나지 않는다
 
 ---
 
@@ -462,14 +468,14 @@ flowchart LR
   - 재신청 시 서버가 마감으로 거부하면 "마감되었습니다" 안내 (BR-5, BR-6, EX-4)
 
 **완료 조건**
-- [ ] 신청됨/취소됨 건이 모두 목록에 표시되고 상태가 시각적으로 구분된다
-- [ ] 쿠폰 이벤트 당첨 건에 할인율과 만료일(확정일+1개월)이 표시된다 (BR-8)
-- [ ] "취소하기" 클릭 시 해당 건의 상태가 취소됨으로 바뀌고 목록이 갱신된다
-- [ ] 취소됨 건에 "재신청하기" 버튼이 노출되고, 클릭 시 정상 재신청되어 상태가 신청됨으로 돌아온다 (BR-3)
-- [ ] 재신청 성공 시 **새 카드가 추가되는 게 아니라 기존 카드의 상태만 바뀐다** (BR-3)
-- [ ] 쿠폰 이벤트가 마감된 상태에서 재신청 시 "마감되었습니다" 안내가 표시된다 (EX-4)
-- [ ] 종료된 프로모션 건에 "[종료된 프로모션]" 태그가 표시되고, 취소는 가능하나 재신청 버튼은 노출되지 않는다 (BR-11, EX-3)
-- [ ] 종료된 프로모션 건이 이 목록에는 계속 보이지만 프로모션 목록 화면에는 없다 (BR-10)
+- [x] 신청됨/취소됨 건이 모두 목록에 표시되고 상태가 시각적으로 구분된다
+- [x] 쿠폰 이벤트 당첨 건에 할인율과 만료일(확정일+1개월)이 표시된다 (BR-8)
+- [x] "취소하기" 클릭 시 해당 건의 상태가 취소됨으로 바뀌고 목록이 갱신된다
+- [x] 취소됨 건에 "재신청하기" 버튼이 노출되고, 클릭 시 정상 재신청되어 상태가 신청됨으로 돌아온다 (BR-3)
+- [x] 재신청 성공 시 **새 카드가 추가되는 게 아니라 기존 카드의 상태만 바뀐다** (BR-3)
+- [x] 쿠폰 이벤트가 마감된 상태에서 재신청 시 "마감되었습니다" 안내가 표시된다 (EX-4)
+- [x] 종료된 프로모션 건에 "[종료된 프로모션]" 태그가 표시되고, 취소는 가능하나 재신청 버튼은 노출되지 않는다 (BR-11, EX-3)
+- [x] 종료된 프로모션 건이 이 목록에는 계속 보이지만 프로모션 목록 화면에는 없다 (BR-10)
 
 ---
 
@@ -486,13 +492,13 @@ flowchart LR
 - 데스크탑 기준 테이블 레이아웃, 모바일에서는 카드형으로 축소
 
 **완료 조건**
-- [ ] 관리자 목록에 임시저장·게시됨·종료됨 프로모션이 모두 상태와 함께 표시된다
-- [ ] 프로모션을 등록하고 "게시"하면 거래처 담당자 목록 화면에 즉시 나타난다 (BR-9)
-- [ ] "종료" 처리하면 거래처 담당자 목록 화면에서 사라진다 (BR-10)
-- [ ] 쿠폰 이벤트 부착 체크 시 정원이 50으로 고정 표시되며 임의 변경이 불가하다 (BR-6)
-- [ ] (Should) "임시저장"으로 저장한 프로모션이 거래처 목록에 노출되지 않는다 (UC-6)
-- [ ] 기존 프로모션 수정이 정상 저장된다
-- [ ] 거래처 담당자 계정으로 관리자 URL 직접 접근 시 차단된다
+- [x] 관리자 목록에 임시저장·게시됨·종료됨 프로모션이 모두 상태와 함께 표시된다
+- [x] 프로모션을 등록하고 "게시"하면 거래처 담당자 목록 화면에 즉시 나타난다 (BR-9)
+- [x] "종료" 처리하면 거래처 담당자 목록 화면에서 사라진다 (BR-10)
+- [x] 쿠폰 이벤트 부착 체크 시 정원이 50으로 고정 표시되며 임의 변경이 불가하다 (BR-6)
+- [x] (Should) "임시저장"으로 저장한 프로모션이 거래처 목록에 노출되지 않는다 (UC-6)
+- [x] 기존 프로모션 수정이 정상 저장된다
+- [x] 거래처 담당자 계정으로 관리자 URL 직접 접근 시 차단된다
 
 ---
 

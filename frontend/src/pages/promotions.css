@@ -1,0 +1,139 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+  box-sizing: border-box;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.promotion-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .promotion-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+.promotion-card {
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  cursor: pointer;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  margin-right: var(--space-2);
+}
+
+.badge-type {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+}
+
+.badge-coupon {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.promotion-remaining {
+  color: var(--color-gray-700);
+  font-size: var(--font-size-sm);
+}
+
+.progress-bar {
+  background: var(--color-gray-100);
+  border-radius: var(--radius-sm);
+  height: 8px;
+  overflow: hidden;
+  margin: var(--space-2) 0;
+}
+
+.progress-bar-fill {
+  background: var(--color-primary);
+  height: 100%;
+}
+
+.coupon-section {
+  margin: var(--space-4) 0;
+}
+
+.promotion-description {
+  color: var(--color-gray-700);
+  line-height: var(--line-height-body);
+  white-space: pre-wrap;
+}
+
+.promotion-notice {
+  color: var(--color-gray-700);
+  font-weight: var(--font-weight-medium);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  padding: var(--space-4);
+  box-sizing: border-box;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 360px;
+  box-sizing: border-box;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.modal-notice {
+  color: var(--color-gray-500);
+  font-size: var(--font-size-xs);
+}
+
+.status-badge-applied {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.status-badge-canceled {
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
+}
+
+.closed-tag {
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
+}
+
+.application-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.application-card {
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+}

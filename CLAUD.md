@@ -18,14 +18,15 @@
 |---|---|---|
 | `docs/1-domain-definition.md` | 도메인 정의서 — 액터, 엔티티/필드, 비즈니스 규칙(BR-1~11), 유스케이스(UC-1~9), 예외케이스(EX-1~5), MVP 범위, 알려진 제약. 모든 문서의 근간이 되는 단일 진실 소스 | v1.5 |
 | `docs/2-usecase.md` | 유스케이스 다이어그램 (mermaid flowchart) | v1.2 |
-| `docs/3-prd.md` | PRD — 목표/KPI, 범위, 기능·비기능 요구사항, 기술스택, 3일/1인 일정, 리스크 | v1.5 |
+| `docs/3-prd.md` | PRD — 목표/KPI, 범위, 기능·비기능 요구사항, 기술스택, 3일/1인 일정, 리스크 | v1.6 |
 | `docs/4-user-scenario.md` | 액터별 사용자 시나리오 (정상/예외 흐름) | v1.1 |
-| `docs/5-project-principle.md` | 프로젝트 구조 설계 원칙 — 레이어/코드/테스트/보안 원칙, FE·BE 디렉토리 구조 | v1.2 |
+| `docs/5-project-principle.md` | 프로젝트 구조 설계 원칙 — 레이어/코드/테스트/보안 원칙, FE·BE 디렉토리 구조 | v1.3 |
 | `docs/6-arch-diagram.md` | 기술 아키텍처 다이어그램(mermaid) — 시스템 구성도, FE 컴포넌트 구조, 인증 흐름 | v1.1 |
 | `docs/7-wireframe.md` + `docs/wireframes/` | 화면별 와이어프레임(ASCII), SVG 샘플 1건 | v1.3 |
 | `docs/8-erd.md` | ERD (mermaid erDiagram) | v1.1 |
 | `docs/8-schema.sql` | 실제 PostgreSQL 17 DDL (ERD 기반) | v1.1 |
-| `docs/9-plan.md` | 실행 계획 — DB/BE/FE/QA Task 분해, 선행 Task, 체크박스 완료 조건 | v1.3 |
+| `docs/9-plan.md` | 실행 계획 — DB/BE/FE/QA Task 분해, 선행 Task, 체크박스 완료 조건 | v1.12 |
 | `docs/swagger.json` | OpenAPI 3.0 스펙 | 1.0.2 |
+| `docs/10-style.md` | 스타일 가이드 — 컬러/타이포/여백/컴포넌트 패턴(커머스 앱 UI 참고 기반) | v1.0 |
 
-문서 간 의존 순서: `1-domain-definition.md`(근간) → `2-usecase.md`/`3-prd.md`/`4-user-scenario.md`/`7-wireframe.md`(요구사항·UX) → `5-project-principle.md`/`6-arch-diagram.md`/`8-erd.md`/`8-schema.sql`/`swagger.json`(기술 설계) → `9-plan.md`(실행 계획, 진행 상황은 체크박스로 추적).
+문서 간 의존 순서: `1-domain-definition.md`(근간) → `2-usecase.md`/`3-prd.md`/`4-user-scenario.md`/`7-wireframe.md`(요구사항·UX) → `5-project-principle.md`/`6-arch-diagram.md`/`8-erd.md`/`8-schema.sql`/`swagger.json`/`10-style.md`(기술·비주얼 설계) → `9-plan.md`(실행 계획, 진행 상황은 체크박스로 추적).
