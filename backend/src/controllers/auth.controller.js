@@ -3,10 +3,10 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db/pool');
 const { findByEmail, insertUser, insertPartner } = require('../db/users.queries');
 
-// ponytail: 만료 시간은 코드 상수로 고정한다(docs/3-prd.md 6.3절 근거).
-// Access 15분 / Refresh 7일. 갱신 정책 변경 필요해지면 여기만 바꾸면 된다.
-const ACCESS_TOKEN_EXPIRES_IN = '15m';
-const REFRESH_TOKEN_EXPIRES_IN = '7d';
+// 만료 시간은 .env(JWT_ACCESS_EXPIRES_IN/JWT_REFRESH_EXPIRES_IN)로 설정 가능(docs/3-prd.md 6.3절 근거).
+// 미설정 시 기본값 Access 15분 / Refresh 7일을 사용한다.
+const ACCESS_TOKEN_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+const REFRESH_TOKEN_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 const BCRYPT_COST_FACTOR = 10;
 
 function signAccessToken(user) {
