@@ -64,16 +64,21 @@ export default function AdminPromotionListPage() {
     <div className="page">
       <header className="page-header">
         <h1>관리자 프로모션 관리</h1>
-        <Link to="/mypage">마이페이지</Link>
-        <button
-          type="button"
-          onClick={() => {
-            logout();
-            navigate('/login');
-          }}
-        >
-          로그아웃
-        </button>
+        <div className="page-nav">
+          <nav className="page-nav-links">
+            <Link to="/mypage">마이페이지</Link>
+          </nav>
+          <button
+            type="button"
+            className="btn-logout"
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+          >
+            로그아웃
+          </button>
+        </div>
       </header>
 
       <Link to="/admin/promotions/new" className="btn-primary admin-new-link">

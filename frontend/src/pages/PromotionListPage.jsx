@@ -12,16 +12,21 @@ export default function PromotionListPage() {
     <div className="page">
       <header className="page-header">
         <h1>B2B-Promo</h1>
-        <Link to="/applications/me">내 신청 목록</Link>
-        <Link to="/mypage">마이페이지</Link>
-        <button
-          onClick={() => {
-            logout();
-            navigate('/login');
-          }}
-        >
-          로그아웃
-        </button>
+        <div className="page-nav">
+          <nav className="page-nav-links">
+            <Link to="/applications/me">내 신청 목록</Link>
+            <Link to="/mypage">마이페이지</Link>
+          </nav>
+          <button
+            className="btn-logout"
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+          >
+            로그아웃
+          </button>
+        </div>
       </header>
       <h2>진행 중인 프로모션</h2>
       {isLoading && <p>불러오는 중...</p>}

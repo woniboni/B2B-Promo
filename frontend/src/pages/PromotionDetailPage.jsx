@@ -70,7 +70,9 @@ export default function PromotionDetailPage() {
 
   return (
     <div className="page">
-      <Link to="/">← 뒤로</Link>
+      <Link to="/" className="detail-back-link">
+        ← 뒤로
+      </Link>
       <div>
         <span className="badge badge-type">{PROMOTION_TYPE_LABELS[promotion.type]}</span>
         {couponEvent && <span className="badge badge-coupon">쿠폰이벤트</span>}
