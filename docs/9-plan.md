@@ -25,6 +25,7 @@
 | v1.19 | 2026-08-20 | FE-7 수행 완료: `src/api/adminPromotions.js`에 `fetchApplicationsSummary`/`useApplicationsSummary` 추가(`GET /admin/promotions/:id/applications`). `src/pages/admin/AdminPromotionStatusPage.jsx`(신규) — 신청됨/취소됨 건수(합계 포함), 쿠폰 이벤트가 있을 때만 `applied_count/capacity`와 할인율(5/10/15/20%)별 분포 섹션 표시(쿠폰 이벤트 없는 프로모션은 할인율 개념이 없으므로 두 섹션 자체를 숨김), 신청 거래처 목록은 API 스키마(`AdminApplicationsSummary.applications`)에 있는 거래처명·상태·신청일시·당첨 할인율 4개 필드만 표시(와이어프레임의 "유효기한" 열은 API가 값을 내려주지 않아 제외, 완료조건에도 없음). 프로모션 제목/유형/상태 헤더는 이 요약 API가 반환하지 않아 기존 `usePromotionDetail(id)`를 재사용해 조합(관리자는 draft/closed 조회 제한이 없어 FE-6의 수정화면과 동일하게 재사용 가능). 목록/카드 반응형은 `AdminPromotionListPage`의 `.admin-table`/`.admin-card-list` 패턴 그대로 재사용(신규 CSS 없음). `AdminPromotionListPage.jsx`의 "현황" 액션을 실제 `Link`로 연결하고 게시됨 행에도 노출(기존에는 종료됨 행에만 자리만 있었음), 기존 `AdminPromotionListPage.test.jsx`의 "현황 버튼" 단언을 "현황 링크"로 갱신. 테스트 2개 파일 신규/확장(adminPromotions.test.js 3케이스, AdminPromotionStatusPage.test.jsx 9케이스) + AdminPromotionListPage.test.jsx 갱신, 전체 89개 테스트 통과, 전체 커버리지 95.1%(문)/96.92%(라인), 신규 페이지 자체는 100%(문/라인/함수). Chrome DevTools MCP로 쿠폰 이벤트 프로모션 1건에 파트너 2곳을 신청시키고 1건은 취소해(신청됨 1/취소됨 1, 할인율 10%/15% 분포) 실행 중인 dev 서버(5175)+백엔드(3000)에서 관리자 목록의 "현황" 링크 클릭 → 실제 수치 일치 확인(375px 카드 레이아웃 포함) 후 임시 데이터 정리. 5개 완료 조건을 실측 검증 후 체크박스 반영 |
 | v1.20 | 2026-08-20 | FE-8 수행 완료: `src/api/users.js`(신규) `fetchMe`/`updateMe`/`changePassword` + `useMe`/`useUpdateMe`/`useChangePassword` 훅(`useUpdateMe` 성공 시 `['users','me']` 무효화). `src/pages/MyPage.jsx`(신규) — 이메일(읽기전용)·이름·전화번호 폼(`정보 저장`)과 별도 비밀번호 변경 폼(`변경하기`), 뒤로가기 링크는 `authStore.user.role`에 따라 `/`(파트너) 또는 `/admin`(관리자)으로 분기. **계획 수립 중 발견한 API-완료조건 불일치**: 완료조건이 요구하는 "거래처명" 표시가 `GET /users/me`(`User` 스키마)와 로그인 응답 어디에도 내려오지 않음(`Partner.name`은 회원가입 응답에 1회성으로만 존재, 저장되지 않음) — 사용자에게 확인한 결과 백엔드(BE-8, 이미 완료 처리됨) 확장 대신 프론트에서 거래처명 표시를 생략하기로 결정(관리자는 원래 거래처가 없어 자연스러움). `App.jsx`에 `/mypage` 라우트 추가(role 제한 없음 — 파트너·관리자 공통 접근, UC-9). `PromotionListPage.jsx`/`AdminPromotionListPage.jsx` 헤더에 "마이페이지" 링크 추가. `src/pages/auth.css`에 `.auth-success` 스타일 추가(기존 `.auth-error`와 대칭). 테스트 2개 파일 신규(users.test.js 8케이스, MyPage.test.jsx 8케이스) + PromotionListPage.test.jsx/AdminPromotionListPage.test.jsx에 네비게이션 링크 확인 각 1건 추가, 전체 105개 테스트 통과, 전체 커버리지 95.86%(문)/97.42%(라인), `MyPage.jsx` 자체는 100%(문/라인/함수). Chrome DevTools MCP로 임시 파트너 계정 1건을 만들어 실행 중인 dev 서버(5175)+백엔드(3000)에서 이름·전화번호 수정 저장 후 새로고침으로 서버 반영 확인 → 비밀번호 변경 → 로그아웃 후 새 비밀번호로 재로그인 성공 확인 → 관리자 계정으로도 `/mypage` 접근 및 `/admin` 뒤로가기 확인(375px 가로 스크롤 없음 포함) 후 임시 데이터 정리. 4개 완료 조건을 실측 검증 후 체크박스 반영 |
 | v1.21 | 2026-08-20 | FE-9 수행 완료(9개 화면 전 화면 반응형 점검, 신규 기능 없음): **점검 방법론 교정** — 기존 세션들이 "375px 확인"에 써온 `resize_page`는 실제 OS 창 크기를 바꾸는 도구라 최소 폭 제약(~500px) 밑으로 내려가지 않아 375px를 실제로 재현하지 못했음을 발견 → 이번 점검부터 CDP 뷰포트 에뮬레이션 도구(`emulate` viewport)로 전환해 `window.innerWidth===375`를 스크립트로 직접 확인한 뒤 점검(과거 태스크들의 "375px 실측" 기록은 실제로는 더 넓은 폭에서 확인된 것일 수 있음, 재작업하지 않고 이번 기록부터 정정). 파트너 화면 6종(로그인/회원가입/목록/상세/내 신청목록/마이페이지) + 관리자 화면 3종(목록/등록·수정폼/참여현황)을 파트너·관리자 임시 계정과 프로모션 2건(일반+쿠폰, 긴 제목 포함)으로 375px·1280px 양쪽에서 `scrollWidth===clientWidth` 스크립트 검증과 스크린샷으로 순회. **점검 중 발견해 수정한 버그 2건**: (1) `promotions.css`의 `.page-header`(모든 화면 공통 헤더)에 `flex-wrap`이 없어 FE-5/FE-7/FE-8에서 네비게이션 링크가 누적되면서 375px에서 "마이페이지" 같은 링크 텍스트가 단어 중간에서 줄바꿈되는 문제 발견 → `flex-wrap: wrap` + `gap` 추가로 필요 시 다음 줄로 자연스럽게 내려가도록 수정. (2) `auth.css`의 `.auth-field input { width:100% }` 규칙이 선택자 범위가 넓어 `AdminPromotionFormPage`의 유형 라디오 버튼·쿠폰이벤트 체크박스까지 늘려버려 375px에서 라디오 버튼이 깨져 보이는 문제 발견 → `input:not([type='radio']):not([type='checkbox'])`로 선택자를 좁혀 텍스트 입력에만 적용되도록 수정(부수적으로 `AdminPromotionListPage`의 로그아웃 버튼이 `.btn-secondary`(모바일 폼 전용, width:100%) 재사용으로 데스크탑에서 행 전체를 채우는 거대한 버튼이 되어 있던 것도 함께 발견해 클래스 제거, `PromotionListPage`와 동일한 기본 버튼으로 통일). 관리자 테이블→카드 축소는 `getComputedStyle` 스크립트로 375px에서 `.admin-table{display:none}`/`.admin-card-list{display:flex}`, 1280px에서 반대임을 재확인. 관리자 전용 레이아웃 프레임워크 도입 없음(CSS 미디어 쿼리만 사용) 확인. `AdminPromotionListPage.test.jsx`에 로그아웃 버튼이 `btn-secondary` 클래스를 갖지 않는지 + 클릭 시 토큰이 지워지는지 검증하는 회귀 테스트 1건 추가(기존에 이 페이지엔 로그아웃 동작 테스트 자체가 없었음), 전체 106개 테스트 통과, 커버리지 96.55%(문)/98.16%(라인). `npm run build` 정상. 4개 완료 조건을 실측 검증 후 체크박스 반영 |
+| v1.22 | 2026-08-21 | QA-1~QA-3 수행 완료: `backend/scripts/verifyConcurrency.js`(신규, 파트너 100계정을 회원가입/로그인 후 `Promise.all`로 쿠폰 이벤트 1건에 동시 신청 발사, HTTP 상태 코드와 DB `applied_count`/`applications` 행 수를 함께 검증하고 종료 시 자기 생성 데이터를 정리)/`backend/scripts/verifyDrawDistribution.js`(신규, `drawDiscountRate()` 순수함수를 20,000회 호출해 목표 분포 대비 오차를 집계)를 신규 작성해 각각 2회/1회 실행 후 모두 PASS 확인. QA-3은 Playwright MCP로 임시 프로모션 6건(일반/쿠폰/마감쿠폰/종료예정/임시저장/EX-4 전용)과 파트너 계정 2건을 준비해 EX-1~EX-5 및 분기 케이스(취소 후 재신청, 종료 후 취소)를 실제 브라우저에서 순회, 9개 주요 화면과 예외 상황 스크린샷 26장을 `e2e/screenshots/`에 저장하고 `e2e/report.md`로 종합 리포트 작성(검증에 사용한 임시 데이터는 검증 후 정리). 4절(QA-1~3)과 5절(최종 완료 기준)의 완료조건 체크박스를 실측 검증 후 반영 |
 
 > 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1), `docs/5-project-principle.md`(v1.1), `docs/6-arch-diagram.md`(v1.1), `docs/7-wireframe.md`(v1.2), `docs/8-erd.md`(v1.1), `docs/8-schema.sql`(v1.1)을 기반으로 작성되었다. UC/BR/EX 번호는 도메인 정의서와 동일하게 참조하며, 파일 경로는 `5-project-principle.md` 6~7절 디렉토리 구조를 그대로 따른다.
 
@@ -576,11 +577,11 @@ flowchart LR
 - 테스트 프레임워크 없이 `node` 실행 파일 형태로 작성
 
 **완료 조건**
-- [ ] `node backend/scripts/verifyConcurrency.js` 실행이 정상 완료된다
-- [ ] 동시 100건 요청 중 **정확히 50건만 성공**하고 나머지는 마감으로 거부된다 (BR-7)
-- [ ] 실행 후 `coupon_events.applied_count`가 정확히 50이다(50 초과 없음)
-- [ ] 성공한 신청 건수와 생성된 `applications` 행 수가 일치한다
-- [ ] 스크립트를 반복 실행해도 동일 결과가 재현된다
+- [x] `node backend/scripts/verifyConcurrency.js` 실행이 정상 완료된다
+- [x] 동시 100건 요청 중 **정확히 50건만 성공**하고 나머지는 마감으로 거부된다 (BR-7)
+- [x] 실행 후 `coupon_events.applied_count`가 정확히 50이다(50 초과 없음)
+- [x] 성공한 신청 건수와 생성된 `applications` 행 수가 일치한다
+- [x] 스크립트를 반복 실행해도 동일 결과가 재현된다
 
 ---
 
@@ -595,10 +596,10 @@ flowchart LR
 - `backend/scripts/verifyDrawDistribution.js`: 추첨 함수를 200회 이상 반복 호출해 할인율별 비율 집계 후 콘솔 출력
 
 **완료 조건**
-- [ ] `node backend/scripts/verifyDrawDistribution.js` 실행이 정상 완료된다
-- [ ] 200회 이상 시행 결과가 할인율별로 집계되어 출력된다
-- [ ] 각 할인율 실제 비율이 목표(5%=40%, 10%=30%, 15%=20%, 20%=10%) 대비 **±10%p 이내**다
-- [ ] 5/10/15/20 이외의 값이 한 번도 나오지 않는다
+- [x] `node backend/scripts/verifyDrawDistribution.js` 실행이 정상 완료된다
+- [x] 200회 이상 시행 결과가 할인율별로 집계되어 출력된다
+- [x] 각 할인율 실제 비율이 목표(5%=40%, 10%=30%, 15%=20%, 20%=10%) 대비 **±10%p 이내**다
+- [x] 5/10/15/20 이외의 값이 한 번도 나오지 않는다
 
 ---
 
@@ -613,21 +614,21 @@ flowchart LR
 - 자동 테스트 대신 브라우저에서 EX-1~5를 순회 확인하는 체크리스트 QA (PRD 9절: 수동 QA 위주)
 
 **완료 조건**
-- [ ] **EX-1**: 정원 마감된 쿠폰 이벤트에 신청 시도 → 버튼 비활성/거부 + "마감되었습니다" 안내
-- [ ] **EX-2**: 이미 신청한 프로모션에 중복 신청 시도 → "이미 신청한 프로모션입니다" 안내, 새 레코드 미생성
-- [ ] **EX-2(분기)**: 취소됨 상태에서 재신청 → 거부가 아니라 상태 전환으로 정상 처리
-- [ ] **EX-3**: 종료된 프로모션에 신규 신청 시도(URL 직접 접근) → 신청 불가 안내 / 기존 신청 건 취소는 정상 동작
-- [ ] **EX-4**: 취소 후 정원이 마감된 상태에서 재신청 → "마감되었습니다" 안내로 거부
-- [ ] **EX-5**: 비로그인 상태로 보호 URL 직접 접근 → 로그인 페이지로 이동
-- [ ] 위 5개 항목의 실제 확인 결과를 기록으로 남겼다
+- [x] **EX-1**: 정원 마감된 쿠폰 이벤트에 신청 시도 → 버튼 비활성/거부 + "마감되었습니다" 안내
+- [x] **EX-2**: 이미 신청한 프로모션에 중복 신청 시도 → "이미 신청한 프로모션입니다" 안내, 새 레코드 미생성
+- [x] **EX-2(분기)**: 취소됨 상태에서 재신청 → 거부가 아니라 상태 전환으로 정상 처리
+- [x] **EX-3**: 종료된 프로모션에 신규 신청 시도(URL 직접 접근) → 신청 불가 안내 / 기존 신청 건 취소는 정상 동작
+- [x] **EX-4**: 취소 후 정원이 마감된 상태에서 재신청 → "마감되었습니다" 안내로 거부
+- [x] **EX-5**: 비로그인 상태로 보호 URL 직접 접근 → 로그인 페이지로 이동
+- [x] 위 5개 항목의 실제 확인 결과를 기록으로 남겼다 (`e2e/report.md` 4절, 스크린샷 `e2e/screenshots/`)
 
 ---
 
 ## 5. 최종 완료 기준 (시연 준비)
 
-- [ ] Must 유스케이스(UC-1~5, UC-7, UC-8)가 브라우저에서 끊김 없이 동작한다
-- [ ] 핵심 시나리오 전 구간 시연 가능: 회원가입 → 로그인 → 프로모션 조회 → 참여 신청 → 추첨 결과 확인 → 내 신청 목록 → 취소 → 재신청
-- [ ] 관리자 시나리오 시연 가능: 로그인 → 프로모션 등록 → 쿠폰 이벤트 부착 → 게시 → 참여 현황 확인 → 종료
-- [ ] QA-1(동시성 50건), QA-2(확률분포), QA-3(예외 5종) 검증이 모두 통과했다
-- [ ] `.env`가 저장소에 커밋되지 않았고 비밀번호가 평문으로 저장되지 않는다
-- [ ] 의도적으로 단순화한 지점에 `ponytail:` 주석이 남아 있다 (`5-project-principle.md` 1절)
+- [x] Must 유스케이스(UC-1~5, UC-7, UC-8)가 브라우저에서 끊김 없이 동작한다 (`e2e/report.md`)
+- [x] 핵심 시나리오 전 구간 시연 가능: 회원가입 → 로그인 → 프로모션 조회 → 참여 신청 → 추첨 결과 확인 → 내 신청 목록 → 취소 → 재신청 (`e2e/report.md` 6절)
+- [x] 관리자 시나리오 시연 가능: 로그인 → 프로모션 등록 → 쿠폰 이벤트 부착 → 게시 → 참여 현황 확인 → 종료 (`e2e/report.md` 6절)
+- [x] QA-1(동시성 50건), QA-2(확률분포), QA-3(예외 5종) 검증이 모두 통과했다 (`e2e/report.md`, `e2e/logs/`)
+- [x] `.env`가 저장소에 커밋되지 않았고 비밀번호가 평문으로 저장되지 않는다 (BE-1/BE-2 완료조건에서 이미 실측 검증됨, bcrypt 해시 저장)
+- [x] 의도적으로 단순화한 지점에 `ponytail:` 주석이 남아 있다 (`5-project-principle.md` 1절, 예: `auth.controller.js`의 계정 존재 비노출 처리, `drawResults.queries.js`의 upsert 전략)

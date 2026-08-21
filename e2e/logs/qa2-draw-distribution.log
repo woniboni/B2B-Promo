@@ -1,0 +1,9 @@
+◇ injected env (8) from .env // tip: ⌘ override existing { override: true }
+시행 횟수: 20000
+5%: 7917건 (39.59%, 목표 40%, 오차 0.42pp) PASS
+10%: 6019건 (30.09%, 목표 30%, 오차 0.10pp) PASS
+15%: 3998건 (19.99%, 목표 20%, 오차 0.01pp) PASS
+20%: 2066건 (10.33%, 목표 10%, 오차 0.33pp) PASS
+5/10/15/20 이외 값: 0건 PASS
+
+[QA-2] PASS

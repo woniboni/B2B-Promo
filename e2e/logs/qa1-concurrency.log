@@ -1,0 +1,16 @@
+◇ injected env (8) from .env // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+프로모션 생성 완료: id=387, capacity=50
+100개 파트너 계정 생성 중...
+파트너 계정 준비 완료. 동시 신청 발사...
+성공(201): 50건
+거부(409): 50건
+DB coupon_events.applied_count=50 (capacity=50)
+DB applications 행 수=50
+PASS - 정확히 50건 성공
+PASS - 나머지는 마감(409)으로 거부
+PASS - 예상 밖 응답 없음
+PASS - applied_count가 50(50 초과 없음)
+PASS - 성공 건수와 applications 행 수 일치
+
+[QA-1] PASS
