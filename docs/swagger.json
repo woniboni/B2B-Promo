@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "B2B-Promo API",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "식자재 유통사가 B2B 거래처에게 프로모션을 안내하고 참여 신청(및 선착순 쿠폰 이벤트 즉시 추첨)을 받는 API. docs/1-domain-definition.md(v1.5), docs/3-prd.md(v1.5), docs/9-plan.md 기준으로 작성된 MVP 범위 스펙이다."
   },
   "servers": [
@@ -638,7 +638,7 @@
         "properties": {
           "id": { "type": "integer" },
           "application_id": { "type": "integer" },
-          "discount_rate": { "type": "number", "enum": [5, 10, 15, 20], "description": "당첨 할인율(%)" },
+          "discount_rate": { "type": "string", "enum": ["5.00", "10.00", "15.00", "20.00"], "description": "당첨 할인율(%). DB가 NUMERIC(5,2) 컬럼이라 캐스팅 없이 그대로 반환되어 문자열이다(예: \"10.00\"). 정수로 캐스팅되어 내려오는 유일한 예외는 AdminApplicationsSummary.applications[].discount_rate다." },
           "confirmed_at": { "type": "string", "format": "date-time" },
           "expires_at": { "type": "string", "format": "date-time", "description": "confirmed_at + 1개월. 이 시점까지만 사용 가능하다고 안내(BR-8)" }
         }

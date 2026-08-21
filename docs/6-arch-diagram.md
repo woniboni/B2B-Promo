@@ -5,6 +5,7 @@
 |---|---|---|
 | v1.0 | 2026-08-13 | 최초 작성 |
 | v1.1 | 2026-08-13 | 프론트엔드 컴포넌트 구조 다이어그램 추가 |
+| v1.2 | 2026-08-21 | 구현 완료 후 코드 대비 정합성 재검토 반영: 2절 다이어그램에서 실제로 만들어지지 않은 `components/` 노드 제거, 4절 "배포 구성" 신규 추가(Vercel 프론트/백엔드 + Supabase, SPA fallback, CORS) |
 
 > 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/3-prd.md`(v1.5), `docs/5-project-principle.md`(v1.1)를 기반으로 작성되었다. PRD v1.5에 따라 Access/Refresh 토큰은 모두 클라이언트 측(Zustand/localStorage)에 저장하며 httpOnly 쿠키는 사용하지 않는다. 로드밸런서·캐시서버·메시지큐·CDN·모니터링 등 이번 MVP 범위에 없는 인프라는 다이어그램에 포함하지 않는다.
 
@@ -67,19 +68,17 @@ flowchart TB
     adminStatus["admin/AdminPromotionStatusPage (UC-8)"]
   end
 
-  components["components/ (공용 UI)"]
   api["api/*.js (TanStack Query 훅)"]
   store["store/authStore.js (Zustand)"]
 
   app --> login & signup & list & detail & myapp & mypage & adminList & adminForm & adminStatus
 
-  pages --> components
   pages --> api
   pages -.로그인 세션 참조.-> store
 ```
 
-- `App.jsx`가 라우팅으로 각 page를 연결하고, page들은 공용 `components/`를 재사용한다(`5-project-principle.md` 6절과 동일 구조).
-- 서버 데이터(프로모션/신청 목록 등)는 모든 page가 `api/*.js`(TanStack Query 훅)로만 가져온다.
+- `App.jsx`가 라우팅으로 각 page를 연결한다. 공용 `components/`는 실제로 중복이 발생하지 않아 만들지 않았다(`5-project-principle.md` 6절과 동일하게 YAGNI 적용).
+- 서버 데이터(프로모션/신청 목록 등)는 모든 page가 `api/*.js`(TanStack Query 훅)로만 가져온다. 관리자 전용 API는 `api/adminPromotions.js`로 분리되어 있다.
 - `store/authStore.js`(Zustand)는 로그인 세션만 참조하며 서버 데이터는 담지 않는다.
 
 ---
@@ -112,3 +111,19 @@ sequenceDiagram
 - Access Token 만료(401) 시에만 `/auth/refresh`를 호출해 Refresh Token으로 재발급받고, 원 요청을 재시도한다.
 - Refresh Token은 서명 검증만 하는 stateless 방식이라 서버에 별도 저장소가 없다.
   - ponytail: 두 토큰이 모두 JS 접근 가능한 저장소에 있어 XSS 시 탈취 위험이 크다. 교육용 MVP 범위에서 감수하며, 실서비스 전환 시 Refresh Token을 httpOnly 쿠키로 승격한다(PRD 6.3절과 동일).
+
+---
+
+## 4. 배포 구성 (시연용)
+
+```mermaid
+flowchart LR
+  browser["브라우저"] -->|HTTPS| feVercel["Vercel: 프론트엔드\n(Vite 정적 빌드)"]
+  browser -->|HTTPS + CORS| beVercel["Vercel: 백엔드\n(Express 서버리스 함수)"]
+  beVercel --> supabase[("Supabase\nPostgreSQL")]
+```
+
+- 프론트엔드와 백엔드를 별도 Vercel 프로젝트로 배포하고(각각 `woniboni-0629-fe`/`woniboni-0629-be`), DB는 Supabase 운영 PostgreSQL을 사용한다.
+- 프론트엔드는 클라이언트 사이드 라우팅(react-router)을 쓰므로 `frontend/vercel.json`의 rewrite 규칙으로 모든 경로를 `index.html`로 되돌려보내는 SPA fallback을 구성했다(이 설정이 없으면 새로고침/직접 URL 접근 시 404가 난다).
+- 백엔드는 `FRONTEND_ORIGIN` 환경변수로 배포된 프론트엔드 origin만 CORS 허용한다(`src/app.js`, 5절 CORS 원칙과 동일 구조를 배포 환경에도 그대로 적용).
+- CI/CD 파이프라인·모니터링은 구성하지 않았다(`5-project-principle.md` 5절과 동일하게 범위 밖).

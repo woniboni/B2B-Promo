@@ -7,6 +7,7 @@
 | v1.1 | 2026-08-13 | docs 정합성 교차 검토 결과 반영: PRD 참조 버전을 v1.4로 갱신 |
 | v1.2 | 2026-08-13 | docs 정합성 교차 검토 결과 반영: 4-user-scenario.md 참조 버전을 v1.1로 갱신 |
 | v1.3 | 2026-08-20 | 실제 백엔드 구현 현황 대비 정합성 점검 결과 반영: BE-1 진행 중 사용자가 4절의 "테스트 프레임워크 미도입" 원칙을 명시적으로 override하여 Jest+supertest 테스트 스위트를 도입했고(`docs/9-plan.md` v1.4 변경이력에 기록됨) BE-8까지 105개 이상의 테스트로 유지되고 있어, 4절에 이 override 사실과 현재 실제 테스트 방식(구동 중인 dev 서버에 대한 HTTP 통합 테스트, `jest --runInBand`)을 반영 |
+| v1.4 | 2026-08-21 | 구현 완료 후 코드 대비 정합성 재검토 반영: 5절에 실제로는 Vercel(프론트+백엔드)/Supabase(DB)로 시연용 배포가 이루어졌음을 명시(CI/CD·모니터링은 여전히 범위 밖), 6절 디렉토리 구조에서 실제로 만들어지지 않은 `components/`를 "만들지 않는다" 목록으로 이동하고, 실제로 존재하는 `api/adminPromotions.js`(관리자 전용 API 분리)를 추가하며 `promotions.js` 설명을 실제 책임 범위(조회만)로 정정 |
 
 > 본 문서는 `docs/1-domain-definition.md`(v1.5), `docs/2-usecase.md`, `docs/3-prd.md`(v1.5), `docs/4-user-scenario.md`(v1.1)를 기반으로 작성되었으며, UC/BR/EX 번호는 위 문서들과 동일하게 참조한다. 본 프로젝트는 3일 내 1인 개발로 핵심 기능(회원가입/로그인, 프로모션 CRUD, 참여신청, 쿠폰 추첨, 마이페이지)을 완성하는 교육용 실습이므로, 이 문서가 제시하는 구조는 "3일 안에 실제로 만들고 유지할 수 있는 최소 구조"를 원칙으로 한다.
 
@@ -82,8 +83,9 @@
 - 관리자 권한 체크는 `User.role` 값을 확인하는 간단한 조건문/미들웨어 하나로 충분하다. 역할이 2개(거래처 담당자/관리자)뿐이므로 별도 RBAC 프레임워크나 권한 테이블은 도입하지 않는다.
 - SQL Injection 방지는 `pg`의 파라미터 바인딩(`$1, $2...`)을 예외 없이 사용하는 것만으로 충분하다. 별도 검증 라이브러리 도입 없이, 요청 바디의 필수 필드 존재 여부 정도만 컨트롤러 진입부에서 확인한다.
 - CORS는 프론트엔드 개발/데모 서버 origin만 허용하는 최소 설정으로 둔다.
-- 배포/운영 인프라(CI/CD, 클라우드 호스팅, 로드밸런싱, 모니터링 대시보드 등)는 PRD 4.1절에서 명시적으로 범위 밖이다. 로깅은 `console.error` 수준으로 충분하며 별도 구조화 로깅 시스템은 두지 않는다.
-  - ponytail: 프로덕션 배포/모니터링 인프라가 없다. 실제 운영으로 전환할 때 구조화 로깅, 헬스체크 엔드포인트, CI/CD 파이프라인부터 갖춘다.
+- CI/CD 파이프라인, 로드밸런싱, 모니터링 대시보드 등은 PRD 4.1절에서 명시적으로 범위 밖이다. 로깅은 `console.error` 수준으로 충분하며 별도 구조화 로깅 시스템은 두지 않는다.
+  - 다만 시연을 위해 프론트엔드(Vercel Static/Vite)와 백엔드(Vercel 서버리스 Express)를 Vercel에 배포하고 Supabase PostgreSQL을 운영 DB로 연결했다(각각 `frontend/vercel.json`, 백엔드는 `backend/.env.production` 기준). 빌드 파이프라인 자동화나 모니터링은 여전히 구성하지 않았다 — 이 항목이 가리키는 "인프라"는 CI/CD·로드밸런싱·모니터링이지, 배포 자체를 막는 것은 아니다.
+  - ponytail: 구조화 로깅, 헬스체크 이상의 모니터링, CI/CD 파이프라인이 없다. 실제 운영으로 전환할 때 이 세 가지부터 갖춘다.
 - Rate limiting, API 키 관리, 감사 로그 등은 교육용 MVP로서 실사용자 트래픽이 없으므로 이번 범위에서 제외한다.
 
 ## 6. 디렉토리 구조 — 프론트엔드
@@ -102,11 +104,11 @@ frontend/
         AdminPromotionListPage.jsx    # UC-7, UC-8
         AdminPromotionFormPage.jsx    # UC-6, UC-7
         AdminPromotionStatusPage.jsx  # UC-8
-    components/                   # 여러 페이지가 공유하는 순수 UI 조각 (Button, Card, CouponBadge 등)
     api/                           # 백엔드 호출 함수 + TanStack Query 훅 (엔티티 단위)
       client.js                     # fetch 래퍼: Access Token 부착, 401→refresh 재시도 공통 처리
       auth.js                       # login/signup/refresh
-      promotions.js                 # 목록/상세/등록/수정/게시·종료
+      promotions.js                 # 거래처용 목록/상세 조회
+      adminPromotions.js            # 관리자 전용: 등록/수정/게시·종료/참여현황 (엔드포인트 4개, promotions.js와 책임 분리)
       applications.js               # 신청/취소/내 목록
       users.js                      # 마이페이지
     store/                         # Zustand: 클라이언트 전역 상태만
@@ -115,7 +117,7 @@ frontend/
     main.jsx
 ```
 
-- `layouts/`, `hooks/`(공용 커스텀 훅), `utils/` 등은 지금 만들지 않는다. 실제로 중복이 발생해 필요해지는 시점에 추가한다.
+- `components/`(여러 페이지가 공유하는 순수 UI 조각), `layouts/`, `hooks/`(공용 커스텀 훅), `utils/` 등은 만들지 않는다. 실제로 중복이 발생해 필요해지는 시점에 추가한다(구현 완료 시점까지 `components/`가 필요해진 적이 없었다).
 - 라우팅은 하나의 라이브러리(예: react-router)를 선택해 `App.jsx`에서 일괄 정의한다. 파일 기반 라우팅 프레임워크나 별도 라우트 설정 파일은 불필요하다.
 
 ## 7. 디렉토리 구조 — 백엔드
